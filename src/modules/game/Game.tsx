@@ -3,9 +3,9 @@ import Matrix from "./Matrix";
 import {start} from "../../services/local";
 
 const Game: FC = () => {
-    const getState = start(10, 20);
+    const controls = start(10, 10);
     return (
-        <Matrix getGameState={getState} />
+        <Matrix gameControls={controls} />
     )
 }
 
