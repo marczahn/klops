@@ -1,12 +1,30 @@
-import React, {FC} from "react";
-import Matrix from "./Matrix";
-import {start} from "../../services/local";
+import React, {FC, useEffect} from 'react'
+import Matrix from './Matrix'
+import {start} from '../../services/local'
 
 const Game: FC = () => {
-    const controls = start(10, 10);
-    return (
-        <Matrix gameControls={controls} />
-    )
+	const controls = start(10, 10)
+	const handleArrowPress = (e: KeyboardEvent) => {
+		switch (e.code) {
+			case 'ArrowRight':
+				controls.moveRight()
+				break
+			case 'ArrowLeft':
+				controls.moveLeft()
+				break
+			case 'ArrowDown':
+				controls.moveDown()
+				break
+		}
+	}
+	useEffect(() => {
+		document.addEventListener('keydown', handleArrowPress)
+		return () => {
+			document.removeEventListener('keydown', handleArrowPress)
+		}
+	})
+	return (
+			<Matrix gameControls={controls}/>
+	)
 }
-
 export default Game

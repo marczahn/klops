@@ -1,4 +1,9 @@
+import {cloneDeep} from './clone'
+
 const emptyField = 0
+const DOWN = 'down'
+const LEFT = 'left'
+const RIGHT = 'right'
 
 interface coord {
 	x: number
@@ -16,6 +21,10 @@ export interface GameState {
 	rows: number
 	// active block exists as long as it can move by tetris rules
 	activePiece?: piece
+
+	lastMoveLeft: number
+	lastMoveRight: number
+	lastMoveDown: number
 }
 
 export interface GameControls {
@@ -27,53 +36,109 @@ export interface GameControls {
 }
 
 export const start = (cols: number, rows: number): GameControls => {
-	let state = {matrix: createMarix(cols, rows), cols, rows}
+	let state = {matrix: createMarix(cols, rows), cols, rows, lastMoveRight: 0, lastMoveLeft: 0, lastMoveDown: 0}
 	window.setInterval(() => {
-		state = update(state)
+		state = updateGame(state)
 	}, 500)
 	return {
 		getGameState: () => state,
 		rotate: () => undefined,
-		moveLeft: () => undefined,
-		moveRight: () => undefined,
-		moveDown: () => undefined,
+		moveLeft: () => {
+			state = move(state, LEFT)
+		},
+		moveRight: () => {
+			state = move(state, RIGHT)
+		},
+		moveDown: () => {
+			state = move(state, DOWN)
+		},
 	}
 }
-const update = (state: GameState): GameState => {
-	const out = Object.assign({}, state)
+const updateGame = (state: GameState): GameState => {
+	return move(state, DOWN)
+}
+const move = (state: GameState, direction: string): GameState => {
+	const m = Date.now()
+	if (m - state.lastMoveLeft < 50) {
+		return state
+	}
+	const out = cloneDeep<GameState>(state)
+	out.lastMoveLeft = m
 	if (out.activePiece == undefined) {
 		out.activePiece = createPiece(out.cols)
 	}
-	if (isBlocked(out.activePiece, out.matrix)) {
-		out.activePiece = undefined
-		return out
+	const blockChecker = cloneDeep<piece>(out.activePiece)
+	switch (direction) {
+		case DOWN:
+			blockChecker.zero.y++
+			if (isBlockedDown(blockChecker, out.matrix)) {
+				out.activePiece = undefined
+				return out
+			}
+			if (out.activePiece.zero.y >= 0) {
+				out.matrix = erasePiece(out.matrix, out.activePiece)
+			}
+			out.activePiece.zero.y++
+			out.matrix = drawPiece(out.matrix, out.activePiece)
+			break
+		case LEFT:
+			blockChecker.zero.x--
+			if (isBlockedLeft(blockChecker, out.matrix)) {
+				return out
+			}
+			out.matrix = erasePiece(out.matrix, out.activePiece)
+			out.activePiece.zero.x--
+			out.matrix = drawPiece(out.matrix, out.activePiece)
+			break
+		case RIGHT:
+			blockChecker.zero.x++
+			if (isBlockedRight(blockChecker, out.matrix)) {
+				return out
+			}
+			out.matrix = erasePiece(out.matrix, out.activePiece)
+			out.activePiece.zero.x++
+			out.matrix = drawPiece(out.matrix, out.activePiece)
+			break
 	}
-	const ap = out.activePiece
-	// First: remove active block from matrix by setting belonging fields to zero
-	if (ap.zero.y > -1) {
-		// Not started yet
-		ap.fields.forEach((value: coord) => {
-			out.matrix[ap.zero.y + value.y][ap.zero.x + value.x] = emptyField
-		})
-	}
-	// Second: move piece and readd it to matrix
-	ap.zero.y++
-	ap.fields.forEach((value: coord) => {
-		out.matrix[ap.zero.y + value.y][ap.zero.x + value.x] = 1
-	})
-	out.activePiece = ap
 	return out
 }
-const isBlocked = (piece: piece, matrix: number[][]): boolean => {
+const erasePiece = (matrix: number[][], piece?: piece): number[][] => {
+	if (!piece) {
+		return matrix
+	}
+	toAbsFields(piece).forEach((value: coord) => {
+		matrix[value.y][value.x] = emptyField
+	})
+	return matrix
+}
+const drawPiece = (matrix: number[][], piece: piece): number[][] => {
+	toAbsFields(piece).forEach((value: coord) => {
+		matrix[value.y][value.x] = 1
+	})
+	return matrix
+}
+const isBlockedDown = (piece: piece, matrix: number[][]): boolean => {
 	const lastRowIndex = matrix.length - 1
 	return toAbsFields(piece).reduce(
 			(acc: boolean, v: coord): boolean => {
-				const x = piece.zero.x + v.x
-				const y = piece.zero.y + v.y
-				if (acc) {
-					return acc
-				}
-				return v.y === lastRowIndex || matrix[v.y + 1][v.x] !== emptyField
+				return acc || v.y > lastRowIndex || matrix[v.y][v.x] !== emptyField
+			},
+			false
+	)
+}
+const isBlockedLeft = (piece: piece, matrix: number[][]): boolean => {
+	return toAbsFields(piece).reduce(
+			(acc: boolean, v: coord): boolean => {
+				return acc || v.x < 0 || matrix[v.y][v.x] !== emptyField
+			},
+			false
+	)
+}
+const isBlockedRight = (piece: piece, matrix: number[][]): boolean => {
+	const lastColIndex = matrix[0].length - 1
+	return toAbsFields(piece).reduce(
+			(acc: boolean, v: coord): boolean => {
+				return acc || v.x > lastColIndex || matrix[v.y][v.x] !== emptyField
 			},
 			false
 	)
@@ -92,7 +157,6 @@ const createMarix = (cols: number, rows: number): number[][] => {
 	}
 	return out
 }
-
 const toAbsFields = (piece: piece): coord[] => {
 	return piece.fields.map((v: coord): coord => {
 		return {x: piece.zero.x + v.x, y: piece.zero.y + v.y}
