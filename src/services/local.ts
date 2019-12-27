@@ -14,6 +14,7 @@ interface vector {
 interface block {
 	zero: vector
 	vectors: vector[]
+	degrees: number
 }
 
 export interface GameState {
@@ -57,9 +58,11 @@ export const start = (cols: number, rows: number): GameControls => {
 		},
 	}
 }
+
 const updateGame = (state: GameState): GameState => {
 	return move(state, DOWN)
 }
+
 const move = (state: GameState, direction: string): GameState => {
 	const out = cloneDeep<GameState>(state)
 	if (out.activeBlock == undefined) {
@@ -76,6 +79,7 @@ const move = (state: GameState, direction: string): GameState => {
 			if (isBlocked(out.matrix, blockChecker)) {
 				out.matrix = drawPiece(out.matrix, out.activeBlock)
 				out.activeBlock = undefined
+
 				return out
 			}
 			out.activeBlock.zero.y++
@@ -86,6 +90,7 @@ const move = (state: GameState, direction: string): GameState => {
 			blockChecker.zero.x += (direction === LEFT ? -1 : 1)
 			if (isBlocked(out.matrix, blockChecker)) {
 				out.matrix = drawPiece(out.matrix, out.activeBlock)
+
 				return out
 			}
 			out.matrix = erasePiece(out.matrix, out.activeBlock)
@@ -93,8 +98,10 @@ const move = (state: GameState, direction: string): GameState => {
 			out.matrix = drawPiece(out.matrix, out.activeBlock)
 			break
 	}
+
 	return out
 }
+
 const erasePiece = (matrix: number[][], piece?: block): number[][] => {
 	if (!piece) {
 		return matrix
@@ -104,16 +111,20 @@ const erasePiece = (matrix: number[][], piece?: block): number[][] => {
 			matrix[v.y][v.x] = emptyField
 		}
 	})
+
 	return matrix
 }
+
 const drawPiece = (matrix: number[][], piece: block): number[][] => {
 	toAbsVectors(piece).forEach((v: vector) => {
 		if (v.y >= 0 && v.x >= 0) {
 			matrix[v.y][v.x] = 1
 		}
 	})
+
 	return matrix
 }
+
 const rotate = (state: GameState): GameState => {
 	if (!state.activeBlock) {
 		return state
@@ -133,6 +144,7 @@ const rotate = (state: GameState): GameState => {
 	}
 	out.activeBlock = rotatedPiece
 	drawPiece(out.matrix, rotatedPiece)
+
 	return out
 }
 const resolveBlocking = (matrix: number[][], block: block): block => {
@@ -140,11 +152,29 @@ const resolveBlocking = (matrix: number[][], block: block): block => {
 }
 const rotateBlockClockwise = (block: block): block => {
 	const maxYIndex = block.vectors.reduce((acc: number, v: vector): number => v.y > acc ? v.y : acc, 0)
-	return {zero: block.zero, vectors: block.vectors.map((v: vector): vector => ({x: maxYIndex - v.y, y: v.x}))}
+	const maxXIndex = block.vectors.reduce((acc: number, v: vector): number => v.x > acc ? v.x : acc, 0)
+	const vectors = block.vectors.map((v: vector): vector => ({x: maxYIndex - v.y, y: v.x}))
+
+	const maxNewYIndex = vectors.reduce((acc: number, v: vector): number => v.y > acc ? v.y : acc, 0)
+	const maxNewXIndex = vectors.reduce((acc: number, v: vector): number => v.x > acc ? v.x : acc, 0)
+
+	// If we would use either floor or ceil only all the time elements with a even number of fields would move on repeated rotations
+	const roundFn = block.degrees % 180 === 0 ? Math.ceil : Math.floor
+	const xDistance = roundFn((maxNewXIndex - maxXIndex) / 2)
+	const yDistance = roundFn((maxNewYIndex - maxYIndex) / 2)
+
+	const zero = {
+		x: block.zero.x - xDistance,
+		y: block.zero.y - yDistance,
+	}
+
+	return {degrees: block.degrees + 90, zero: zero, vectors: vectors}
 }
+
 const isBlocked = (matrix: number[][], piece: block): boolean => {
 	const lastRowIndex = matrix.length - 1
 	const lastColIndex = matrix[0].length - 1
+
 	return toAbsVectors(piece).reduce(
 		(acc: boolean, v: vector): boolean => {
 			return acc ||
@@ -156,9 +186,11 @@ const isBlocked = (matrix: number[][], piece: block): boolean => {
 		false
 	)
 }
+
 const createBlock = (cols: number): block => {
-	return {zero: {x: Math.floor(cols / 2), y: -2}, vectors: getRandomBlockVector()}
+	return {degrees: 0, zero: {x: Math.floor(cols / 2), y: -2}, vectors: getRandomBlockVector()}
 }
+
 const createMarix = (cols: number, rows: number): number[][] => {
 	const out: number[][] = []
 	for (let y = 0; y < rows; y++) {
@@ -168,8 +200,10 @@ const createMarix = (cols: number, rows: number): number[][] => {
 		}
 		out.push(row)
 	}
+
 	return out
 }
+
 const toAbsVectors = (piece: block): vector[] => {
 	return piece.vectors.map((v: vector): vector => {
 		return {x: piece.zero.x + v.x, y: piece.zero.y + v.y}
