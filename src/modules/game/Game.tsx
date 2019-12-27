@@ -4,8 +4,8 @@ import {start} from '../../services/local'
 
 const Game: FC = () => {
 	const controls = start(10, 20)
+
 	const handleArrowPress = (e: KeyboardEvent) => {
-		console.log(e.code)
 		switch (e.code) {
 			case 'ArrowRight':
 				controls.moveRight()
@@ -21,14 +21,14 @@ const Game: FC = () => {
 				break
 		}
 	}
+
 	useEffect(() => {
 		document.addEventListener('keydown', handleArrowPress)
 		return () => {
 			document.removeEventListener('keydown', handleArrowPress)
 		}
 	})
-	return (
-			<Matrix gameControls={controls}/>
-	)
+
+	return (<Matrix gameControls={controls}/>)
 }
 export default Game

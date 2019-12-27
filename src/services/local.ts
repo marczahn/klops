@@ -102,29 +102,6 @@ const move = (state: GameState, direction: string): GameState => {
 	return out
 }
 
-const erasePiece = (matrix: number[][], piece?: block): number[][] => {
-	if (!piece) {
-		return matrix
-	}
-	toAbsVectors(piece).forEach((v: vector) => {
-		if (v.y >= 0 && v.x >= 0) {
-			matrix[v.y][v.x] = emptyField
-		}
-	})
-
-	return matrix
-}
-
-const drawPiece = (matrix: number[][], piece: block): number[][] => {
-	toAbsVectors(piece).forEach((v: vector) => {
-		if (v.y >= 0 && v.x >= 0) {
-			matrix[v.y][v.x] = 1
-		}
-	})
-
-	return matrix
-}
-
 const rotate = (state: GameState): GameState => {
 	if (!state.activeBlock) {
 		return state
@@ -185,6 +162,29 @@ const isBlocked = (matrix: number[][], piece: block): boolean => {
 		},
 		false
 	)
+}
+
+const erasePiece = (matrix: number[][], piece?: block): number[][] => {
+	if (!piece) {
+		return matrix
+	}
+	toAbsVectors(piece).forEach((v: vector) => {
+		if (v.y >= 0 && v.x >= 0) {
+			matrix[v.y][v.x] = emptyField
+		}
+	})
+
+	return matrix
+}
+
+const drawPiece = (matrix: number[][], piece: block): number[][] => {
+	toAbsVectors(piece).forEach((v: vector) => {
+		if (v.y >= 0 && v.x >= 0) {
+			matrix[v.y][v.x] = 1
+		}
+	})
+
+	return matrix
 }
 
 const createBlock = (cols: number): block => {
