@@ -14,7 +14,6 @@
     "lint:fix": "yarn lint --fix"
   },
   "dependencies": {
-    "@types/styled-components": "^4.4.1",
     "gatsby": "^2.4.3",
     "gatsby-plugin-less": "^2.0.13",
     "gatsby-plugin-manifest": "^2.1.1",
@@ -32,17 +31,23 @@
     "@hot-loader/react-dom": "^16.11.0",
     "@types/lodash": "^4.14.149",
     "@types/react-helmet": "^5.0.8",
+    "@types/styled-components": "^4.4.1",
     "@typescript-eslint/eslint-plugin": "^1.9.0",
     "@typescript-eslint/parser": "^1.9.0",
+    "babel-jest": "^24.9.0",
+    "babel-preset-gatsby": "^0.2.26",
     "eslint": "^5.16.0",
     "eslint-config-prettier": "^4.2.0",
     "eslint-plugin-prettier": "^3.1.0",
     "eslint-plugin-react": "^7.13.0",
     "husky": "^2.2.0",
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^24.9.0",
     "jsdom": "^9.4.0",
     "lint-staged": "^8.1.6",
     "path": "^0.12.7",
     "prettier": "^1.17.0",
+    "react-test-renderer": "^16.12.0",
     "typescript": "^3.4.5"
   }
 }

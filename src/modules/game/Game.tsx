@@ -3,7 +3,7 @@ import Matrix from './Matrix'
 import {start} from '../../services/local'
 
 const Game: FC = () => {
-	const controls = start(10, 10)
+	const controls = start(10, 20)
 	const handleArrowPress = (e: KeyboardEvent) => {
 		console.log(e.code)
 		switch (e.code) {

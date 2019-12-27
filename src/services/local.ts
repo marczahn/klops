@@ -1,19 +1,19 @@
 import {cloneDeep} from './clone'
-import {dir} from 'tmp'
+import {getRandomBlockVector} from './blocks'
 
 const emptyField = 0
 const DOWN = 'down'
 const LEFT = 'left'
 const RIGHT = 'right'
 
-interface coord {
+interface vector {
 	x: number
 	y: number
 }
 
-interface piece {
-	zero: coord
-	fields: coord[]
+interface block {
+	zero: vector
+	vectors: vector[]
 }
 
 export interface GameState {
@@ -21,7 +21,7 @@ export interface GameState {
 	cols: number
 	rows: number
 	// active block exists as long as it can move by tetris rules
-	activePiece?: piece
+	activeBlock?: block
 }
 
 export interface GameControls {
@@ -62,140 +62,102 @@ const updateGame = (state: GameState): GameState => {
 }
 const move = (state: GameState, direction: string): GameState => {
 	const out = cloneDeep<GameState>(state)
-	if (out.activePiece == undefined) {
-		out.activePiece = createPiece(out.cols)
+	if (out.activeBlock == undefined) {
+		out.activeBlock = createBlock(out.cols)
 	}
-	const blockChecker = cloneDeep<piece>(out.activePiece)
-	if (out.activePiece) {
+	const blockChecker = cloneDeep<block>(out.activeBlock)
+	if (out.activeBlock) {
 		// Erase first so that we can reliably check if the new place is free
-		out.matrix = erasePiece(out.matrix, out.activePiece)
+		out.matrix = erasePiece(out.matrix, out.activeBlock)
 	}
 	switch (direction) {
 		case DOWN:
 			blockChecker.zero.y++
 			if (isBlocked(out.matrix, blockChecker)) {
-				out.matrix = drawPiece(out.matrix, out.activePiece)
-				out.activePiece = undefined
+				out.matrix = drawPiece(out.matrix, out.activeBlock)
+				out.activeBlock = undefined
 				return out
 			}
-			out.activePiece.zero.y++
-			out.matrix = drawPiece(out.matrix, out.activePiece)
+			out.activeBlock.zero.y++
+			out.matrix = drawPiece(out.matrix, out.activeBlock)
 			break
 		case RIGHT:
 		case LEFT:
-			if (direction === LEFT) {
-				blockChecker.zero.x--
-			} else {
-				blockChecker.zero.x++
-			}
-
+			blockChecker.zero.x += (direction === LEFT ? -1 : 1)
 			if (isBlocked(out.matrix, blockChecker)) {
-				out.matrix = drawPiece(out.matrix, out.activePiece)
+				out.matrix = drawPiece(out.matrix, out.activeBlock)
 				return out
 			}
-			out.matrix = erasePiece(out.matrix, out.activePiece)
-			if (direction === LEFT) {
-				out.activePiece.zero.x--
-			} else {
-				out.activePiece.zero.x++
-			}
-			out.matrix = drawPiece(out.matrix, out.activePiece)
+			out.matrix = erasePiece(out.matrix, out.activeBlock)
+			out.activeBlock.zero.x += (direction === LEFT ? -1 : 1)
+			out.matrix = drawPiece(out.matrix, out.activeBlock)
 			break
 	}
 	return out
 }
-const erasePiece = (matrix: number[][], piece?: piece): number[][] => {
+const erasePiece = (matrix: number[][], piece?: block): number[][] => {
 	if (!piece) {
 		return matrix
 	}
-	toAbsFields(piece).forEach((v: coord) => {
+	toAbsVectors(piece).forEach((v: vector) => {
 		if (v.y >= 0 && v.x >= 0) {
 			matrix[v.y][v.x] = emptyField
 		}
 	})
 	return matrix
 }
-const drawPiece = (matrix: number[][], piece: piece): number[][] => {
-	toAbsFields(piece).forEach((v: coord) => {
+const drawPiece = (matrix: number[][], piece: block): number[][] => {
+	toAbsVectors(piece).forEach((v: vector) => {
 		if (v.y >= 0 && v.x >= 0) {
 			matrix[v.y][v.x] = 1
 		}
 	})
 	return matrix
 }
-
 const rotate = (state: GameState): GameState => {
-	if (!state.activePiece) {
+	if (!state.activeBlock) {
 		return state
 	}
 	const out = cloneDeep(state)
-	const rotatedPiece = rotatePiece(state.activePiece)
-	erasePiece(out.matrix, out.activePiece)
-	if (isBlocked(out.matrix, rotatedPiece)) {
-		return state
+	if (!out.activeBlock) {
+		// This is just for avoid a typescript error at the check after resolveBlocking
+		return out
 	}
-	out.activePiece = rotatedPiece
+	let rotatedPiece = rotateBlockClockwise(state.activeBlock)
+	erasePiece(out.matrix, out.activeBlock)
+	if (isBlocked(out.matrix, rotatedPiece)) {
+		rotatedPiece = resolveBlocking(out.matrix, rotatedPiece)
+		if (rotatedPiece.zero.x === out.activeBlock.zero.x && rotatedPiece.zero.y === out.activeBlock.zero.y) {
+			return state
+		}
+	}
+	out.activeBlock = rotatedPiece
 	drawPiece(out.matrix, rotatedPiece)
 	return out
 }
-
-const rotatePiece = (piece: piece): piece => {
-	// Create quadratic matrix
-	const maxXIndex = piece.fields.reduce((acc: number, v: coord): number => v.x > acc ? v.x : acc, 0)
-	const maxYIndex = piece.fields.reduce((acc: number, v: coord): number => v.y > acc ? v.y : acc, 0)
-	const src: number[][] = []
-	for (let y = 0; y <= maxYIndex; y++) {
-		let row = []
-		for (let x = 0; x <= maxXIndex; x++) {
-			row.push(0)
-		}
-		src.push(row)
-	}
-	const dst: number[][] = []
-	for (let y = 0; y <= maxYIndex; y++) {
-		let row = []
-		for (let x = 0; x <= maxXIndex; x++) {
-			row.push(0)
-		}
-		dst.push(row)
-	}
-	piece.fields.forEach((v: coord) => {
-		src[v.y][v.x] = 1
-	})
-	let fields: coord[] = []
-	let out: piece = {zero: piece.zero, fields: fields}
-
-	for (let y = 0; y <= maxYIndex; y++) {
-		for (let x = 0; x <= maxXIndex; x++) {
-			dst[x][maxYIndex - y] = src[y][x]
-		}
-	}
-	for (let y = 0; y <= maxYIndex; y++) {
-		for (let x = 0; x <= maxXIndex; x++) {
-			if (dst[y][x] !== 0) {
-				out.fields.push({x: x, y: y})
-			}
-		}
-	}
-	return out
+const resolveBlocking = (matrix: number[][], block: block): block => {
+	return block
 }
-const isBlocked = (matrix: number[][], piece: piece): boolean => {
+const rotateBlockClockwise = (block: block): block => {
+	const maxYIndex = block.vectors.reduce((acc: number, v: vector): number => v.y > acc ? v.y : acc, 0)
+	return {zero: block.zero, vectors: block.vectors.map((v: vector): vector => ({x: maxYIndex - v.y, y: v.x}))}
+}
+const isBlocked = (matrix: number[][], piece: block): boolean => {
 	const lastRowIndex = matrix.length - 1
 	const lastColIndex = matrix[0].length - 1
-	return toAbsFields(piece).reduce(
-			(acc: boolean, v: coord): boolean => {
-				return acc ||
-						v.x < 0 ||
-						v.y > lastRowIndex ||
-						v.x > lastColIndex ||
-						(v.y >= 0 && matrix[v.y][v.x] !== emptyField)
-			},
-			false
+	return toAbsVectors(piece).reduce(
+		(acc: boolean, v: vector): boolean => {
+			return acc ||
+				v.x < 0 ||
+				v.y > lastRowIndex ||
+				v.x > lastColIndex ||
+				(v.y >= 0 && matrix[v.y][v.x] !== emptyField)
+		},
+		false
 	)
 }
-const createPiece = (cols: number): piece => {
-	const fields = [{x: 0, y: 0}, {x: 1, y: 0}, {x: 1, y: 1}]
-	return {zero: {x: Math.floor(cols / 2), y: -2}, fields: fields}
+const createBlock = (cols: number): block => {
+	return {zero: {x: Math.floor(cols / 2), y: -2}, vectors: getRandomBlockVector()}
 }
 const createMarix = (cols: number, rows: number): number[][] => {
 	const out: number[][] = []
@@ -208,8 +170,8 @@ const createMarix = (cols: number, rows: number): number[][] => {
 	}
 	return out
 }
-const toAbsFields = (piece: piece): coord[] => {
-	return piece.fields.map((v: coord): coord => {
+const toAbsVectors = (piece: block): vector[] => {
+	return piece.vectors.map((v: vector): vector => {
 		return {x: piece.zero.x + v.x, y: piece.zero.y + v.y}
 	})
 }
