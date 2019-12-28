@@ -7,7 +7,7 @@ const DOWN = 'down'
 const LEFT = 'left'
 const RIGHT = 'right'
 
-export interface GameState {
+interface GameState {
 	matrix: number[][]
 	cols: number
 	rows: number
@@ -29,7 +29,7 @@ export const start = (cols: number, rows: number): GameControls => {
 	}
 	state.interval = window.setInterval(() => {
 		state = updateGame(state)
-	}, 500)
+	}, 400)
 	return {
 		getGameState: (): ExternalGameState => ({
 			matrix: cloneDeep<number[][]>(state.matrix),
@@ -91,7 +91,7 @@ const move = (state: GameState, direction: string): GameState => {
 			if (isBlocked(out.matrix, blockChecker)) {
 				out.matrix = drawBlock(out.matrix, out.activeBlock)
 				out.activeBlock = undefined
-				// Check and Update lines
+
 				return updateLines(out)
 			}
 			out.activeBlock.zero.y++
@@ -114,7 +114,6 @@ const move = (state: GameState, direction: string): GameState => {
 }
 
 const updateLines = (state: GameState): GameState => {
-	console.log('update lines')
 	const foundLines: number[] = state.matrix.reduce(
 		((acc: number[], row: number[], i: number) => {
 			const lineComplete: boolean = row.reduce((acc: boolean, cell: number) => acc && cell !== emptyField, true)
@@ -146,10 +145,6 @@ const rotate = (state: GameState): GameState => {
 		return state
 	}
 	const out = cloneDeep(state)
-	if (!out.activeBlock) {
-		// This is just for avoid a typescript error at the check after resolveBlocking
-		return out
-	}
 	let rotatedBlock = rotateBlockClockwise(state.activeBlock)
 	eraseBlock(out.matrix, out.activeBlock)
 	if (isBlocked(out.matrix, rotatedBlock)) {
@@ -177,7 +172,7 @@ export const rotateBlockClockwise = (block: block): block => {
 	const xDistance = roundFn((maxNewXIndex - maxXIndex) / 2)
 	const yDistance = roundFn((maxNewYIndex - maxYIndex) / 2)
 
-	// We need to reposition zero because blocks are rotated around there upper right corner
+	// We need to reposition zero because blocks are rotated around there upper right corner and not around their center
 	const zero = {
 		x: block.zero.x - xDistance,
 		y: block.zero.y - yDistance,
