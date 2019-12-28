@@ -3,7 +3,6 @@ import React from 'react'
 import {Helmet} from 'react-helmet'
 
 import './styles.css'
-import {Body} from '../common/body'
 
 const seo = {
 	url: 'https://t3.gg',
@@ -24,7 +23,6 @@ const home = () => (
 			<meta property="og:description" content={seo.description}/>
 			<meta property="og:type" content="website"/>
 		</Helmet>
-		<Body/>
 	</div>
 )
 
