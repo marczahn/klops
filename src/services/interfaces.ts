@@ -9,19 +9,19 @@ export interface block {
 	degrees: number
 }
 
-export interface GameState {
+export interface ExternalGameState {
 	matrix: number[][]
 	cols: number
 	rows: number
-	// active block exists as long as it can move by tetris rules
-	activeBlock?: block
 	ended: boolean
+	lines: number
 }
 
 export interface GameControls {
-	getGameState: () => GameState
+	getGameState: () => ExternalGameState
 	rotate: () => void
 	moveLeft: () => void
 	moveRight: () => void
 	moveDown: () => void
+	stopGame: () => void
 }

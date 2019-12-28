@@ -26,6 +26,7 @@ const Game: FC = () => {
 		document.addEventListener('keydown', handleArrowPress)
 		return () => {
 			document.removeEventListener('keydown', handleArrowPress)
+			controls.stopGame()
 		}
 	})
 

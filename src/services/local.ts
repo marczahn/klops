@@ -1,11 +1,22 @@
 import {cloneDeep} from './clone'
 import {getRandomBlockVector} from './blocks'
-import {block, GameControls, GameState, vector} from './interfaces'
+import {block, ExternalGameState, GameControls, vector} from './interfaces'
 
 const emptyField = 0
 const DOWN = 'down'
 const LEFT = 'left'
 const RIGHT = 'right'
+
+export interface GameState {
+	matrix: number[][]
+	cols: number
+	rows: number
+	// active block exists as long as it can move by tetris rules
+	activeBlock?: block
+	ended: boolean
+	lines: number
+	interval: number
+}
 
 export const start = (cols: number, rows: number): GameControls => {
 	let state: GameState = {
@@ -13,16 +24,20 @@ export const start = (cols: number, rows: number): GameControls => {
 		cols,
 		rows,
 		ended: false,
+		lines: 0,
+		interval: 0,
 	}
-	const gameInterval = window.setInterval(() => {
+	state.interval = window.setInterval(() => {
 		state = updateGame(state)
-		if (state.ended) {
-			window.clearInterval(gameInterval)
-			console.log('Game ended')
-		}
 	}, 500)
 	return {
-		getGameState: () => state,
+		getGameState: (): ExternalGameState => ({
+			matrix: cloneDeep<number[][]>(state.matrix),
+			rows: state.rows,
+			cols: state.cols,
+			lines: state.lines,
+			ended: state.ended,
+		}),
 		rotate: () => {
 			state = rotate(state)
 		},
@@ -35,7 +50,18 @@ export const start = (cols: number, rows: number): GameControls => {
 		moveDown: () => {
 			state = move(state, DOWN)
 		},
+		stopGame: () => {
+			state = stopGame(state)
+		}
 	}
+}
+
+const stopGame = (state: GameState): GameState => {
+	window.clearInterval(state.interval)
+	console.log('Game ended')
+	const out = cloneDeep<GameState>(state)
+	out.ended = true
+	return out
 }
 
 const updateGame = (state: GameState): GameState => {
@@ -49,26 +75,24 @@ const move = (state: GameState, direction: string): GameState => {
 	const out = cloneDeep<GameState>(state)
 	if (out.activeBlock == undefined) {
 		out.activeBlock = createBlock(out.cols)
-		if (isBlocked(out.matrix, out.activeBlock)) {
-			out.ended = true
-			return out
-		}
+		const blocked = isBlocked(out.matrix, out.activeBlock)
 		out.matrix = drawBlock(out.matrix, out.activeBlock)
+		if (blocked) {
+			return stopGame(out)
+		}
 		return out
 	}
 	const blockChecker = cloneDeep<block>(out.activeBlock)
-	if (out.activeBlock) {
-		// Erase first so that we can reliably check if the new place is free
-		out.matrix = eraseBlock(out.matrix, out.activeBlock)
-	}
+	// Erase the active block so that we can reliably check if the new place is free
+	out.matrix = eraseBlock(out.matrix, out.activeBlock)
 	switch (direction) {
 		case DOWN:
 			blockChecker.zero.y++
 			if (isBlocked(out.matrix, blockChecker)) {
 				out.matrix = drawBlock(out.matrix, out.activeBlock)
 				out.activeBlock = undefined
-
-				return out
+				// Check and Update lines
+				return updateLines(out)
 			}
 			out.activeBlock.zero.y++
 			break
@@ -89,6 +113,34 @@ const move = (state: GameState, direction: string): GameState => {
 	return out
 }
 
+const updateLines = (state: GameState): GameState => {
+	console.log('update lines')
+	const foundLines: number[] = state.matrix.reduce(
+		((acc: number[], row: number[], i: number) => {
+			const lineComplete: boolean = row.reduce((acc: boolean, cell: number) => acc && cell !== emptyField, true)
+			if (lineComplete) {
+				acc.push(i)
+			}
+			return acc
+		}),
+		[],
+	)
+	if (foundLines.length === 0) {
+		return state
+	}
+	const out = cloneDeep<GameState>(state)
+	out.lines += foundLines.length
+	const newMatrix = createMarix(out.matrix[0].length, foundLines.length)
+	for (const row in state.matrix) {
+		if (foundLines.includes(parseInt(row))) {
+			continue
+		}
+		newMatrix.push(state.matrix[row])
+	}
+	out.matrix = newMatrix
+	return out
+}
+
 const rotate = (state: GameState): GameState => {
 	if (!state.activeBlock || state.ended) {
 		return state
@@ -98,23 +150,18 @@ const rotate = (state: GameState): GameState => {
 		// This is just for avoid a typescript error at the check after resolveBlocking
 		return out
 	}
-	let rotatedPiece = rotateBlockClockwise(state.activeBlock)
+	let rotatedBlock = rotateBlockClockwise(state.activeBlock)
 	eraseBlock(out.matrix, out.activeBlock)
-	if (isBlocked(out.matrix, rotatedPiece)) {
-		rotatedPiece = resolveBlocking(out.matrix, rotatedPiece)
-		if (rotatedPiece.zero.x === out.activeBlock.zero.x && rotatedPiece.zero.y === out.activeBlock.zero.y) {
-			return state
-		}
+	if (isBlocked(out.matrix, rotatedBlock)) {
+		drawBlock(out.matrix, state.activeBlock)
+		return state
 	}
-	out.activeBlock = rotatedPiece
-	drawBlock(out.matrix, rotatedPiece)
+	out.activeBlock = rotatedBlock
+	drawBlock(out.matrix, rotatedBlock)
 
 	return out
 }
-const resolveBlocking = (matrix: number[][], block: block): block => {
-	// Not implemented so far because it is somewhat a luxury problem :-)
-	return block
-}
+
 export const rotateBlockClockwise = (block: block): block => {
 	const maxYIndex = block.vectors.reduce((acc: number, v: vector): number => v.y > acc ? v.y : acc, 0)
 	const maxXIndex = block.vectors.reduce((acc: number, v: vector): number => v.x > acc ? v.x : acc, 0)
