@@ -12,9 +12,14 @@ export const start = (cols: number, rows: number): GameControls => {
 		matrix: createMarix(cols, rows),
 		cols,
 		rows,
+		ended: false,
 	}
-	window.setInterval(() => {
+	const gameInterval = window.setInterval(() => {
 		state = updateGame(state)
+		if (state.ended) {
+			window.clearInterval(gameInterval)
+			console.log('Game ended')
+		}
 	}, 500)
 	return {
 		getGameState: () => state,
@@ -38,46 +43,54 @@ const updateGame = (state: GameState): GameState => {
 }
 
 const move = (state: GameState, direction: string): GameState => {
+	if (state.ended) {
+		return state
+	}
 	const out = cloneDeep<GameState>(state)
 	if (out.activeBlock == undefined) {
 		out.activeBlock = createBlock(out.cols)
+		if (isBlocked(out.matrix, out.activeBlock)) {
+			out.ended = true
+			return out
+		}
+		out.matrix = drawBlock(out.matrix, out.activeBlock)
+		return out
 	}
 	const blockChecker = cloneDeep<block>(out.activeBlock)
 	if (out.activeBlock) {
 		// Erase first so that we can reliably check if the new place is free
-		out.matrix = erasePiece(out.matrix, out.activeBlock)
+		out.matrix = eraseBlock(out.matrix, out.activeBlock)
 	}
 	switch (direction) {
 		case DOWN:
 			blockChecker.zero.y++
 			if (isBlocked(out.matrix, blockChecker)) {
-				out.matrix = drawPiece(out.matrix, out.activeBlock)
+				out.matrix = drawBlock(out.matrix, out.activeBlock)
 				out.activeBlock = undefined
 
 				return out
 			}
 			out.activeBlock.zero.y++
-			out.matrix = drawPiece(out.matrix, out.activeBlock)
 			break
 		case RIGHT:
 		case LEFT:
 			blockChecker.zero.x += (direction === LEFT ? -1 : 1)
 			if (isBlocked(out.matrix, blockChecker)) {
-				out.matrix = drawPiece(out.matrix, out.activeBlock)
+				out.matrix = drawBlock(out.matrix, out.activeBlock)
 
 				return out
 			}
-			out.matrix = erasePiece(out.matrix, out.activeBlock)
+			out.matrix = eraseBlock(out.matrix, out.activeBlock)
 			out.activeBlock.zero.x += (direction === LEFT ? -1 : 1)
-			out.matrix = drawPiece(out.matrix, out.activeBlock)
 			break
 	}
+	out.matrix = drawBlock(out.matrix, out.activeBlock)
 
 	return out
 }
 
 const rotate = (state: GameState): GameState => {
-	if (!state.activeBlock) {
+	if (!state.activeBlock || state.ended) {
 		return state
 	}
 	const out = cloneDeep(state)
@@ -86,7 +99,7 @@ const rotate = (state: GameState): GameState => {
 		return out
 	}
 	let rotatedPiece = rotateBlockClockwise(state.activeBlock)
-	erasePiece(out.matrix, out.activeBlock)
+	eraseBlock(out.matrix, out.activeBlock)
 	if (isBlocked(out.matrix, rotatedPiece)) {
 		rotatedPiece = resolveBlocking(out.matrix, rotatedPiece)
 		if (rotatedPiece.zero.x === out.activeBlock.zero.x && rotatedPiece.zero.y === out.activeBlock.zero.y) {
@@ -94,7 +107,7 @@ const rotate = (state: GameState): GameState => {
 		}
 	}
 	out.activeBlock = rotatedPiece
-	drawPiece(out.matrix, rotatedPiece)
+	drawBlock(out.matrix, rotatedPiece)
 
 	return out
 }
@@ -142,11 +155,11 @@ const isBlocked = (matrix: number[][], piece: block): boolean => {
 	)
 }
 
-const erasePiece = (matrix: number[][], piece?: block): number[][] => {
-	if (!piece) {
+const eraseBlock = (matrix: number[][], block?: block): number[][] => {
+	if (!block) {
 		return matrix
 	}
-	toAbsVectors(piece).forEach((v: vector) => {
+	toAbsVectors(block).forEach((v: vector) => {
 		if (v.y >= 0 && v.x >= 0) {
 			matrix[v.y][v.x] = emptyField
 		}
@@ -155,8 +168,8 @@ const erasePiece = (matrix: number[][], piece?: block): number[][] => {
 	return matrix
 }
 
-const drawPiece = (matrix: number[][], piece: block): number[][] => {
-	toAbsVectors(piece).forEach((v: vector) => {
+const drawBlock = (matrix: number[][], block: block): number[][] => {
+	toAbsVectors(block).forEach((v: vector) => {
 		if (v.y >= 0 && v.x >= 0) {
 			matrix[v.y][v.x] = 1
 		}
@@ -166,7 +179,7 @@ const drawPiece = (matrix: number[][], piece: block): number[][] => {
 }
 
 const createBlock = (cols: number): block => {
-	return {degrees: 0, zero: {x: Math.floor(cols / 2), y: -2}, vectors: getRandomBlockVector()}
+	return {degrees: 0, zero: {x: Math.floor(cols / 2), y: 0}, vectors: getRandomBlockVector()}
 }
 
 const createMarix = (cols: number, rows: number): number[][] => {
@@ -182,8 +195,8 @@ const createMarix = (cols: number, rows: number): number[][] => {
 	return out
 }
 
-const toAbsVectors = (piece: block): vector[] => {
-	return piece.vectors.map((v: vector): vector => {
-		return {x: piece.zero.x + v.x, y: piece.zero.y + v.y}
+const toAbsVectors = (block: block): vector[] => {
+	return block.vectors.map((v: vector): vector => {
+		return {x: block.zero.x + v.x, y: block.zero.y + v.y}
 	})
 }

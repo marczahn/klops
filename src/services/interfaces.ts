@@ -15,6 +15,7 @@ export interface GameState {
 	rows: number
 	// active block exists as long as it can move by tetris rules
 	activeBlock?: block
+	ended: boolean
 }
 
 export interface GameControls {
