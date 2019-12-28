@@ -1,37 +1,11 @@
 import {cloneDeep} from './clone'
 import {getRandomBlockVector} from './blocks'
+import {block, GameControls, GameState, vector} from './interfaces'
 
 const emptyField = 0
 const DOWN = 'down'
 const LEFT = 'left'
 const RIGHT = 'right'
-
-interface vector {
-	x: number
-	y: number
-}
-
-interface block {
-	zero: vector
-	vectors: vector[]
-	degrees: number
-}
-
-export interface GameState {
-	matrix: number[][]
-	cols: number
-	rows: number
-	// active block exists as long as it can move by tetris rules
-	activeBlock?: block
-}
-
-export interface GameControls {
-	getGameState: () => GameState
-	rotate: () => void
-	moveLeft: () => void
-	moveRight: () => void
-	moveDown: () => void
-}
 
 export const start = (cols: number, rows: number): GameControls => {
 	let state: GameState = {
@@ -125,9 +99,10 @@ const rotate = (state: GameState): GameState => {
 	return out
 }
 const resolveBlocking = (matrix: number[][], block: block): block => {
+	// Not implemented so far because it is somewhat a luxury problem :-)
 	return block
 }
-const rotateBlockClockwise = (block: block): block => {
+export const rotateBlockClockwise = (block: block): block => {
 	const maxYIndex = block.vectors.reduce((acc: number, v: vector): number => v.y > acc ? v.y : acc, 0)
 	const maxXIndex = block.vectors.reduce((acc: number, v: vector): number => v.x > acc ? v.x : acc, 0)
 	const vectors = block.vectors.map((v: vector): vector => ({x: maxYIndex - v.y, y: v.x}))
@@ -135,11 +110,14 @@ const rotateBlockClockwise = (block: block): block => {
 	const maxNewYIndex = vectors.reduce((acc: number, v: vector): number => v.y > acc ? v.y : acc, 0)
 	const maxNewXIndex = vectors.reduce((acc: number, v: vector): number => v.x > acc ? v.x : acc, 0)
 
-	// If we would use either floor or ceil only all the time elements with a even number of fields would move on repeated rotations
+	// If we would use either floor or ceil only all the time
+	// elements with a even number of fields would "move" to the left.
+	// That way we use floor/ceil each 50/50
 	const roundFn = block.degrees % 180 === 0 ? Math.ceil : Math.floor
 	const xDistance = roundFn((maxNewXIndex - maxXIndex) / 2)
 	const yDistance = roundFn((maxNewYIndex - maxYIndex) / 2)
 
+	// We need to reposition zero because blocks are rotated around there upper right corner
 	const zero = {
 		x: block.zero.x - xDistance,
 		y: block.zero.y - yDistance,
