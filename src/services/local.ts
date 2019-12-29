@@ -6,6 +6,8 @@ const emptyField = 0
 const DOWN = 'down'
 const LEFT = 'left'
 const RIGHT = 'right'
+const ROTATE = 'rotate'
+export const LOOPED = 'looped'
 
 export const BLOCK_CREATED = 'BLOCK_CREATED'
 export const LINES_COMPLETED = 'LINES_COMPLETED'
@@ -23,9 +25,8 @@ interface GameState {
 	stepCounter: number
 	blockCount: number
 	listeners: ((state: ExternalGameState, action: string) => void)[]
-
-	// We need this to avoid automatic moving while moving left or right
-	lastPlayerMove: number
+	queue: string[]
+	queueInterval: number
 }
 
 export const start = (cols: number, rows: number): GameControls => {
@@ -35,32 +36,56 @@ export const start = (cols: number, rows: number): GameControls => {
 		rows,
 		ended: false,
 		lineCount: 0,
-		interval: 0,
+		interval: -1,
 		stepCounter: 0,
 		blockCount: 0,
 		listeners: [],
-		lastPlayerMove: Date.now(),
+		queue: [],
+		queueInterval: -1,
 	}
 	state.interval = window.setInterval(() => {
-		const now = Date.now()
-		if (now - state.lastPlayerMove < 100) {
-			return state
+		if (state.queue.length > 0) {
+			return
 		}
-		state = updateGame(state)
+		state = loop(state)
+		publish(state, LOOPED)
 	}, 400)
+	state.queueInterval = window.setInterval(() => {
+		if (state.queue.length === 0) {
+			return
+		}
+		while (true) {
+			const action = state.queue.shift()
+			if (!action) {
+				break
+			}
+			switch (action) {
+				case ROTATE:
+					state = rotate(state)
+					break
+				case LEFT:
+				case RIGHT:
+				case DOWN:
+					state = move(state, action)
+					break
+			}
+		}
+		publish(state, LOOPED)
+	}, 10)
+
 	return {
 		getGameState: (): ExternalGameState => createExternalGameState(state),
 		rotate: () => {
-			state = rotate(state)
+			state.queue.push(ROTATE)
 		},
 		moveLeft: () => {
-			state = move(state, LEFT)
+			state.queue.push(LEFT)
 		},
 		moveRight: () => {
-			state = move(state, RIGHT)
+			state.queue.push(RIGHT)
 		},
 		moveDown: () => {
-			state = move(state, DOWN)
+			state.queue.push(DOWN)
 		},
 		stopGame: () => {
 			state = stopGame(state)
@@ -102,7 +127,7 @@ const stopGame = (state: GameState): GameState => {
 	return out
 }
 
-const updateGame = (state: GameState): GameState => {
+const loop = (state: GameState): GameState => {
 	return move(state, DOWN)
 }
 
@@ -147,7 +172,6 @@ const move = (state: GameState, direction: string): GameState => {
 			}
 			out.matrix = eraseBlock(out.matrix, out.activeBlock)
 			out.activeBlock.zero.x += (direction === LEFT ? -1 : 1)
-			out.lastPlayerMove = Date.now()
 			break
 	}
 	out.matrix = drawBlock(out.matrix, out.activeBlock)
