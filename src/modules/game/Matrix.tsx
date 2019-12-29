@@ -9,7 +9,7 @@ interface Props {
 const Matrix: FC<Props> = (props: Props) => {
 	const [gameState, setGameState] = useState<ExternalGameState>(props.gameControls.getGameState)
 	// matrixScalar is necessary because setGameState does not realize a changed matrix as a new value
-	const [_, setMatrixScalar] = useState<string>('')
+	const [_, setCounter] = useState<number>(0)
 	let lastMove = Date.now()
 	let clearHandle = -1
 
@@ -54,7 +54,7 @@ const Matrix: FC<Props> = (props: Props) => {
 	const update = () => {
 		const state = props.gameControls.getGameState()
 		setGameState(state)
-		setMatrixScalar(serializeMatrix(state.matrix))
+		setCounter(state.counter)
 	}
 
 	const serializeMatrix = (matrix: number[][]): string => {

@@ -14,7 +14,9 @@ export interface ExternalGameState {
 	cols: number
 	rows: number
 	ended: boolean
-	lines: number
+	lineCount: number
+	counter: number
+	blockCount: number
 }
 
 export interface GameControls {

@@ -14,8 +14,10 @@ interface GameState {
 	// active block exists as long as it can move by tetris rules
 	activeBlock?: block
 	ended: boolean
-	lines: number
+	lineCount: number
 	interval: number
+	stepCounter: number
+	blockCount: number
 }
 
 export const start = (cols: number, rows: number): GameControls => {
@@ -24,8 +26,10 @@ export const start = (cols: number, rows: number): GameControls => {
 		cols,
 		rows,
 		ended: false,
-		lines: 0,
+		lineCount: 0,
 		interval: 0,
+		stepCounter: 0,
+		blockCount: 0
 	}
 	state.interval = window.setInterval(() => {
 		state = updateGame(state)
@@ -35,8 +39,10 @@ export const start = (cols: number, rows: number): GameControls => {
 			matrix: cloneDeep<number[][]>(state.matrix),
 			rows: state.rows,
 			cols: state.cols,
-			lines: state.lines,
+			lineCount: state.lineCount,
 			ended: state.ended,
+			counter: state.stepCounter,
+			blockCount: state.blockCount,
 		}),
 		rotate: () => {
 			state = rotate(state)
@@ -58,7 +64,7 @@ export const start = (cols: number, rows: number): GameControls => {
 
 const stopGame = (state: GameState): GameState => {
 	window.clearInterval(state.interval)
-	console.log('Game ended')
+	console.log('Board ended')
 	const out = cloneDeep<GameState>(state)
 	out.ended = true
 	return out
@@ -73,8 +79,10 @@ const move = (state: GameState, direction: string): GameState => {
 		return state
 	}
 	const out = cloneDeep<GameState>(state)
+	out.stepCounter++
 	if (out.activeBlock == undefined) {
 		out.activeBlock = createBlock(out.cols)
+		out.blockCount++
 		const blocked = isBlocked(out.matrix, out.activeBlock)
 		out.matrix = drawBlock(out.matrix, out.activeBlock)
 		if (blocked) {
@@ -128,7 +136,7 @@ const updateLines = (state: GameState): GameState => {
 		return state
 	}
 	const out = cloneDeep<GameState>(state)
-	out.lines += foundLines.length
+	out.lineCount += foundLines.length
 	const newMatrix = createMarix(out.matrix[0].length, foundLines.length)
 	for (const row in state.matrix) {
 		if (foundLines.includes(parseInt(row))) {
@@ -145,6 +153,7 @@ const rotate = (state: GameState): GameState => {
 		return state
 	}
 	const out = cloneDeep(state)
+	out.stepCounter++
 	let rotatedBlock = rotateBlockClockwise(state.activeBlock)
 	eraseBlock(out.matrix, out.activeBlock)
 	if (isBlocked(out.matrix, rotatedBlock)) {
@@ -172,7 +181,7 @@ export const rotateBlockClockwise = (block: block): block => {
 	const xDistance = roundFn((maxNewXIndex - maxXIndex) / 2)
 	const yDistance = roundFn((maxNewYIndex - maxYIndex) / 2)
 
-	// We need to reposition zero because blocks are rotated around there upper right corner and not around their center
+	// We need to reposition zero because blockCount are rotated around there upper right corner and not around their center
 	const zero = {
 		x: block.zero.x - xDistance,
 		y: block.zero.y - yDistance,

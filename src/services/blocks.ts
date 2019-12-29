@@ -11,7 +11,7 @@ consists of 4 vectors (x/y) - one for each field: 0/0, 0/1, 1/1, 2/1
 
 As you can see these vectors are relative to a start vector.
 
-TODO - Add weights or simply add blocks multiple times to increase their occurences
+TODO - Add weights or simply add blockCount multiple times to increase their occurences
  */
 
 import {vector} from './interfaces'
