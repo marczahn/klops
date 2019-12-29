@@ -26,4 +26,5 @@ export interface GameControls {
 	moveRight: () => void
 	moveDown: () => void
 	stopGame: () => void
+	addListener: (listener: (state: ExternalGameState, action: string) => void) => void
 }

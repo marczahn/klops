@@ -7,6 +7,10 @@ const DOWN = 'down'
 const LEFT = 'left'
 const RIGHT = 'right'
 
+export const BLOCK_CREATED = 'BLOCK_CREATED'
+export const LINES_COMPLETED = 'LINES_COMPLETED'
+export const GAME_ENDED = 'GAME_ENDED'
+
 interface GameState {
 	matrix: number[][]
 	cols: number
@@ -18,6 +22,10 @@ interface GameState {
 	interval: number
 	stepCounter: number
 	blockCount: number
+	listeners: ((state: ExternalGameState, action: string) => void)[]
+
+	// We need this to avoid automatic moving while moving left or right
+	lastPlayerMove: number
 }
 
 export const start = (cols: number, rows: number): GameControls => {
@@ -29,21 +37,19 @@ export const start = (cols: number, rows: number): GameControls => {
 		lineCount: 0,
 		interval: 0,
 		stepCounter: 0,
-		blockCount: 0
+		blockCount: 0,
+		listeners: [],
+		lastPlayerMove: Date.now(),
 	}
 	state.interval = window.setInterval(() => {
+		const now = Date.now()
+		if (now - state.lastPlayerMove < 100) {
+			return state
+		}
 		state = updateGame(state)
 	}, 400)
 	return {
-		getGameState: (): ExternalGameState => ({
-			matrix: cloneDeep<number[][]>(state.matrix),
-			rows: state.rows,
-			cols: state.cols,
-			lineCount: state.lineCount,
-			ended: state.ended,
-			counter: state.stepCounter,
-			blockCount: state.blockCount,
-		}),
+		getGameState: (): ExternalGameState => createExternalGameState(state),
 		rotate: () => {
 			state = rotate(state)
 		},
@@ -58,8 +64,33 @@ export const start = (cols: number, rows: number): GameControls => {
 		},
 		stopGame: () => {
 			state = stopGame(state)
+		},
+		addListener: (listener: (state: ExternalGameState, action: string) => void) => {
+			state = addListener(state, listener)
 		}
 	}
+}
+
+const createExternalGameState = (state: GameState): ExternalGameState => ({
+	matrix: cloneDeep<number[][]>(state.matrix),
+	rows: state.rows,
+	cols: state.cols,
+	lineCount: state.lineCount,
+	ended: state.ended,
+	counter: state.stepCounter,
+	blockCount: state.blockCount,
+})
+
+const addListener = (state: GameState, listener: (state: ExternalGameState, action: string) => void): GameState => {
+	const out = cloneDeep<GameState>(state)
+	out.listeners.push(listener)
+
+	return out
+}
+
+const publish = (state: GameState, action: string) => {
+	const out = createExternalGameState(state)
+	state.listeners.forEach(listener => listener(out, action))
 }
 
 const stopGame = (state: GameState): GameState => {
@@ -67,6 +98,7 @@ const stopGame = (state: GameState): GameState => {
 	console.log('Board ended')
 	const out = cloneDeep<GameState>(state)
 	out.ended = true
+	publish(out, GAME_ENDED)
 	return out
 }
 
@@ -83,6 +115,7 @@ const move = (state: GameState, direction: string): GameState => {
 	if (out.activeBlock == undefined) {
 		out.activeBlock = createBlock(out.cols)
 		out.blockCount++
+		publish(out, BLOCK_CREATED)
 		const blocked = isBlocked(out.matrix, out.activeBlock)
 		out.matrix = drawBlock(out.matrix, out.activeBlock)
 		if (blocked) {
@@ -114,6 +147,7 @@ const move = (state: GameState, direction: string): GameState => {
 			}
 			out.matrix = eraseBlock(out.matrix, out.activeBlock)
 			out.activeBlock.zero.x += (direction === LEFT ? -1 : 1)
+			out.lastPlayerMove = Date.now()
 			break
 	}
 	out.matrix = drawBlock(out.matrix, out.activeBlock)
@@ -137,6 +171,7 @@ const updateLines = (state: GameState): GameState => {
 	}
 	const out = cloneDeep<GameState>(state)
 	out.lineCount += foundLines.length
+	publish(out, LINES_COMPLETED)
 	const newMatrix = createMarix(out.matrix[0].length, foundLines.length)
 	for (const row in state.matrix) {
 		if (foundLines.includes(parseInt(row))) {

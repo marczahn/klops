@@ -1,6 +1,6 @@
 import React, {FC, useEffect, useState} from 'react'
-import {MatrixTd} from './matrix.sc'
-import {GameControls, ExternalGameState} from '../../services/interfaces'
+import {MatrixTable, MatrixTd} from './matrix.sc'
+import {ExternalGameState, GameControls} from '../../services/interfaces'
 
 interface Props {
 	gameControls: GameControls;
@@ -8,7 +8,6 @@ interface Props {
 
 const Matrix: FC<Props> = (props: Props) => {
 	const [gameState, setGameState] = useState<ExternalGameState>(props.gameControls.getGameState)
-	// matrixScalar is necessary because setGameState does not realize a changed matrix as a new value
 	const [_, setCounter] = useState<number>(0)
 	let lastMove = Date.now()
 	let clearHandle = -1
@@ -62,14 +61,18 @@ const Matrix: FC<Props> = (props: Props) => {
 			(acc, y) => `${acc}` + y.reduce((acc, x) => `${acc}-${x}`, ''), ''
 		)
 	}
+	let html = ''
+	for (let y = 0; y < gameState.matrix.length; y++) {
+		html += '<tr>'
+		for (let x = 0; x < gameState.matrix[y].length; x++) {
+			html += `<td class=cell-${gameState.matrix[y][x]}>${gameState.matrix[y][x]}</td>`
+		}
+		html += '</tr>'
+	}
 	return (
-		<table>
-			<tbody>{
-				gameState.matrix.map(
-					(yv: number[], y: number) => <tr key={y}>{yv.map((xv, x) => <MatrixTd key={`${y}-${x}`}
-																		className={`cell-${xv}`}>{xv}</MatrixTd>)}</tr>)
-			}</tbody>
-		</table>
+		<MatrixTable dangerouslySetInnerHTML={{ __html: html }}>
+
+		</MatrixTable>
 	)
 }
 export default Matrix
