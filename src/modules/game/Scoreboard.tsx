@@ -19,6 +19,9 @@ const Scoreboard: FC<Props> = (props: Props) => {
 		const state = props.gameControls.getGameState()
 		setLineCount(state.lineCount)
 		setBlockCount(state.blockCount)
+		setLevel(state.level)
+		setNextBlock(state.nextBlock)
+		setPoints(state.points)
 	}, [])
 
 	const update = (state: ExternalGameState, action: string) => {

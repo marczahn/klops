@@ -14,7 +14,7 @@ As you can see these vectors are relative to a start vector.
 TODO - Add weights or simply add blockCount multiple times to increase their occurences
  */
 
-import {vector} from './interfaces'
+import {block, vector} from './interfaces'
 
 const blockVectors: vector[][] = [
 	// Original blocks:
@@ -34,19 +34,19 @@ const blockVectors: vector[][] = [
 	[{x: 0, y: 0}, {x: 1, y: 0}, {x: 1, y: 1}, {x: 2, y: 1}],
 
 	// custom blocks
-	// corner left
+	// corner
 	[{x: 1, y: 0}, {x: 1, y: 1}, {x: 0, y: 1}],
-	// corner right
-	[{x: 0, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}],
+	// 1x3
+	[{x: 0, y: 0}, {x: 0, y: 1}, {x: 0, y: 2}],
 ]
 
 export const blockVectorFactory = () => {
 	let bucket: number[] = generateBucket(blockVectors)
-	return ((): vector[] => {
+	return ((zero: vector): block => {
 		if (bucket.length === 0) {
 			bucket = generateBucket(blockVectors)
 		}
-		return blockVectors[bucket.pop()]
+		return {zero: zero, vectors: blockVectors[bucket.pop()], degrees: 0}
 	})
 }
 
@@ -61,7 +61,7 @@ const generateBucket = (vectors: vector[][]): number[] => {
 const shuffle = (a: number[]) => {
 	for (let i = a.length - 1; i > 0; i--) {
 		const j = Math.floor(Math.random() * (i + 1));
-		[a[i], a[j]] = [a[j], a[i]];
+		[a[i], a[j]] = [a[j], a[i]]
 	}
-	return a;
+	return a
 }
