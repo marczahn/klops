@@ -24,6 +24,7 @@ interface GameState {
 	interval: number
 	stepCounter: number
 	blockCount: number
+	// used for rendering, scores etc
 	listeners: ((state: ExternalGameState, action: string) => void)[]
 	queue: string[]
 	queueInterval: number
@@ -74,7 +75,7 @@ export const start = (cols: number, rows: number): GameControls => {
 	}, 10)
 
 	return {
-		getGameState: (): ExternalGameState => createExternalGameState(state),
+		getGameState: (): ExternalGameState => toExternalGameState(state),
 		rotate: () => {
 			state.queue.push(ROTATE)
 		},
@@ -96,7 +97,7 @@ export const start = (cols: number, rows: number): GameControls => {
 	}
 }
 
-const createExternalGameState = (state: GameState): ExternalGameState => ({
+const toExternalGameState = (state: GameState): ExternalGameState => ({
 	matrix: cloneDeep<number[][]>(state.matrix),
 	rows: state.rows,
 	cols: state.cols,
@@ -114,7 +115,7 @@ const addListener = (state: GameState, listener: (state: ExternalGameState, acti
 }
 
 const publish = (state: GameState, action: string) => {
-	const out = createExternalGameState(state)
+	const out = toExternalGameState(state)
 	state.listeners.forEach(listener => listener(out, action))
 }
 

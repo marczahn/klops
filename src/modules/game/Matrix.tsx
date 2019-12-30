@@ -9,8 +9,8 @@ interface Props {
 
 const Matrix: FC<Props> = (props: Props) => {
 	const [gameState, setGameState] = useState<ExternalGameState>(props.gameControls.getGameState)
+	// counter is used to trigger a rerendering of the matrix
 	const [_, setCounter] = useState<number>(0)
-	let lastMove = Date.now()
 
 	useEffect(() => {
 		props.gameControls.addListener((state: ExternalGameState, action: string) => {
@@ -23,10 +23,6 @@ const Matrix: FC<Props> = (props: Props) => {
 	}, [])
 
 	const handleArrowPress = (e: KeyboardEvent) => {
-		if (Date.now() - lastMove < 50) {
-//			return
-		}
-		lastMove = Date.now()
 		switch (e.code) {
 			case 'ArrowRight':
 				props.gameControls.moveRight()
