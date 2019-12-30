@@ -1,8 +1,8 @@
 import React, {FC} from "react";
-import Board from "../modules/game/Board";
+import Game from "../modules/game/Game";
 
 const game:FC = () => {
-    return (<div className="home"><Board/></div>
+    return (<div className="home"><Game/></div>
     );
 }
 

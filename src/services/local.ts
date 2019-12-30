@@ -1,5 +1,5 @@
 import {cloneDeep} from './clone'
-import {getRandomBlockVector} from './blocks'
+import {blockVectorFactory} from './blocks'
 import {block, ExternalGameState, GameControls, vector} from './interfaces'
 
 const emptyField = 0
@@ -19,8 +19,8 @@ interface GameState {
 	rows: number
 	// active block exists as long as it can move by tetris rules
 	activeBlock?: block
+	nextBlock: block
 	ended: boolean
-	lineCount: number
 	interval: number
 	stepCounter: number
 	blockCount: number
@@ -28,21 +28,32 @@ interface GameState {
 	listeners: ((state: ExternalGameState, action: string) => void)[]
 	queue: string[]
 	queueInterval: number
+	blockFactory: () => vector[]
+
+	lineCount: number
+	points: number
+	level: number
 }
 
 export const start = (cols: number, rows: number): GameControls => {
+	const blockFactory = blockVectorFactory()
 	let state: GameState = {
 		matrix: createMarix(cols, rows),
 		cols,
 		rows,
 		ended: false,
-		lineCount: 0,
 		interval: -1,
 		stepCounter: 0,
 		blockCount: 0,
 		listeners: [],
 		queue: [],
 		queueInterval: -1,
+		blockFactory: blockVectorFactory(),
+		nextBlock: createBlock(cols, blockFactory()),
+
+		lineCount: 0,
+		points: 0,
+		level: 1
 	}
 	state.interval = window.setInterval(() => {
 		if (state.queue.length > 0) {
@@ -105,7 +116,28 @@ const toExternalGameState = (state: GameState): ExternalGameState => ({
 	ended: state.ended,
 	counter: state.stepCounter,
 	blockCount: state.blockCount,
+	nextBlock: convertBlockToMatrix(state.nextBlock),
+	level: state.level,
+	points: state.points,
 })
+
+const convertBlockToMatrix = (block: block): number[][] => {
+	const maxYIndex = block.vectors.reduce((acc: number, v: vector): number => v.y > acc ? v.y : acc, 0)
+	const maxXIndex = block.vectors.reduce((acc: number, v: vector): number => v.x > acc ? v.x : acc, 0)
+	const out: number[][] = []
+	for (let y = 0; y <= maxYIndex; y++) {
+		const row = []
+		for (let x = 0; x <= maxXIndex; x++) {
+			row.push(emptyField)
+		}
+		out.push(row)
+	}
+	block.vectors.forEach((v: vector) => {
+		out[v.y][v.x] = 1
+	})
+
+	return out
+}
 
 const addListener = (state: GameState, listener: (state: ExternalGameState, action: string) => void): GameState => {
 	const out = cloneDeep<GameState>(state)
@@ -121,7 +153,7 @@ const publish = (state: GameState, action: string) => {
 
 const stopGame = (state: GameState): GameState => {
 	window.clearInterval(state.interval)
-	console.log('Board ended')
+	console.log('Game ended')
 	const out = cloneDeep<GameState>(state)
 	out.ended = true
 	publish(out, GAME_ENDED)
@@ -139,15 +171,7 @@ const move = (state: GameState, direction: string): GameState => {
 	const out = cloneDeep<GameState>(state)
 	out.stepCounter++
 	if (out.activeBlock == undefined) {
-		out.activeBlock = createBlock(out.cols)
-		out.blockCount++
-		publish(out, BLOCK_CREATED)
-		const blocked = isBlocked(out.matrix, out.activeBlock)
-		out.matrix = drawBlock(out.matrix, out.activeBlock)
-		if (blocked) {
-			return stopGame(out)
-		}
-		return out
+		return initNextBlock(out)
 	}
 	const blockChecker = cloneDeep<block>(out.activeBlock)
 	// Erase the active block so that we can reliably check if the new place is free
@@ -180,6 +204,21 @@ const move = (state: GameState, direction: string): GameState => {
 	return out
 }
 
+const initNextBlock = (state: GameState): GameState => {
+	const out = cloneDeep<GameState>(state)
+	out.activeBlock = out.nextBlock
+	out.nextBlock = createBlock(out.cols, state.blockFactory())
+	out.blockCount++
+	const blocked = isBlocked(out.matrix, out.activeBlock)
+	out.matrix = drawBlock(out.matrix, out.activeBlock)
+	publish(out, BLOCK_CREATED)
+	if (blocked) {
+		return stopGame(out)
+	}
+
+	return out
+}
+
 const updateLines = (state: GameState): GameState => {
 	const foundLines: number[] = state.matrix.reduce(
 		((acc: number[], row: number[], i: number) => {
@@ -196,6 +235,7 @@ const updateLines = (state: GameState): GameState => {
 	}
 	const out = cloneDeep<GameState>(state)
 	out.lineCount += foundLines.length
+	out.points += calculatePoints(foundLines.length, out.level)
 	publish(out, LINES_COMPLETED)
 	const newMatrix = createMarix(out.matrix[0].length, foundLines.length)
 	for (const row in state.matrix) {
@@ -206,6 +246,29 @@ const updateLines = (state: GameState): GameState => {
 	}
 	out.matrix = newMatrix
 	return out
+}
+
+const calculatePoints = (foundLines: number, level: number): number => {
+	let basePoints = 0
+	switch (foundLines) {
+		case 1:
+			basePoints = 40
+			break
+		case 2:
+			basePoints = 100
+			break
+		case 3:
+			basePoints = 300
+			break
+		case 4:
+			basePoints = 1200
+			break
+		default:
+			// Not more points for now
+			basePoints = 1500
+			break
+	}
+	return basePoints * level
 }
 
 const rotate = (state: GameState): GameState => {
@@ -289,8 +352,8 @@ const drawBlock = (matrix: number[][], block: block): number[][] => {
 	return matrix
 }
 
-const createBlock = (cols: number): block => {
-	return {degrees: 0, zero: {x: Math.floor(cols / 2), y: 0}, vectors: getRandomBlockVector()}
+const createBlock = (cols: number, vectors: vector[]): block => {
+	return {degrees: 0, zero: {x: Math.floor(cols / 2), y: 0}, vectors: vectors}
 }
 
 const createMarix = (cols: number, rows: number): number[][] => {
