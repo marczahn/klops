@@ -17,7 +17,7 @@ const LEVEL_THRESHOLD = 10
 const BASE_LOOP_INTERVAL = 600
 
 // The divider defines the acceleration per level - The lower the quicker increases the speed. 8 feels tetris'ish
-const LOOP_INTERVAL_DIVIDER = 8
+const LOOP_INTERVAL_DIVIDER = 6
 
 interface GameState {
 	matrix: number[][]
@@ -254,6 +254,7 @@ const updateLines = (state: GameState): GameState => {
 	const out = cloneDeep<GameState>(state)
 	out.lineCount += foundLines.length
 	out.level = Math.floor(out.lineCount / LEVEL_THRESHOLD)
+	debugger
 	out.points += calculatePoints(foundLines.length, out.level)
 	publish(out, LINES_COMPLETED)
 
@@ -292,7 +293,7 @@ const calculatePoints = (foundLines: number, level: number): number => {
 			basePoints = 1500
 			break
 	}
-	return basePoints * level
+	return basePoints * (level + 1)
 }
 
 const rotate = (state: GameState): GameState => {

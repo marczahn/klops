@@ -10,7 +10,7 @@ const Matrix: FC<Props> = (props: Props) => {
 	for (let y = 0; y < props.matrix.length; y++) {
 		html += '<tr>'
 		for (let x = 0; x < props.matrix[y].length; x++) {
-			html += `<td class=cell-${props.matrix[y][x]}>${props.matrix[y][x]}</td>`
+			html += `<td style="width: 10px; height: 10px; line-height: 10px;" class=cell-${props.matrix[y][x]}>${props.matrix[y][x]}</td>`
 		}
 		html += '</tr>'
 	}
