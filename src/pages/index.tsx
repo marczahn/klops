@@ -1,6 +1,6 @@
 import React from 'react'
-
-import {Helmet} from 'react-helmet'
+import { Container, Grid, Menu } from 'semantic-ui-react'
+import 'semantic-ui-less/semantic.less'
 
 import './styles.css'
 
@@ -12,18 +12,9 @@ const seo = {
 }
 
 const home = () => (
-	<div className="home">
-		<title>{seo.title}</title>
-		<Helmet title={seo.title}>
-			<meta name="description" content={seo.description}/>
-			<link rel="icon" type="image/png" sizes="32x32" href={seo.favicon}/>
-
-			<meta property="og:url" content={seo.url}/>
-			<meta property="og:title" content={seo.title}/>
-			<meta property="og:description" content={seo.description}/>
-			<meta property="og:type" content="website"/>
-		</Helmet>
-	</div>
+	<Container>
+		IRgendein text
+	</Container>
 )
 
 export default home
