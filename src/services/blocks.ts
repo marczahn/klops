@@ -46,15 +46,20 @@ export const blockVectorFactory = () => {
 		if (bucket.length === 0) {
 			bucket = generateBucket(blockVectors)
 		}
-		return {zero: zero, vectors: blockVectors[bucket.pop()], degrees: 0}
+		const k: number | undefined = bucket.pop()
+		if (!k) {
+			// T Typescript transpiler does not realize that it is impossible that bucket cannot be empty at this place
+			throw 'No elements in bucket left'
+		}
+		return {zero: zero, vectors: blockVectors[k], degrees: 0}
 	})
 }
 
 const generateBucket = (vectors: vector[][]): number[] => {
 	let keys: number[] = []
-	for (let key of vectors.keys()) {
+	vectors.forEach((v: vector[], key: number) => {
 		keys.push(key)
-	}
+	})
 	return shuffle(keys)
 }
 

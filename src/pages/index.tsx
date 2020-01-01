@@ -11,10 +11,10 @@ const seo = {
 	favicon: '/icon.png'
 }
 
-const home = () => (
+const index = () => (
 	<Container>
 		IRgendein text
 	</Container>
 )
 
-export default home
+export default index

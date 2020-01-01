@@ -1,60 +1,51 @@
 {
-  "name": "minimal-gatsby-typescript-template",
+  "name": "klops",
+  "version": "0.1.0",
   "private": true,
-  "description": "Minimal Gatsby Typescript Template",
-  "version": "1.0.0",
-  "license": "MIT",
-  "scripts": {
-    "build": "gatsby build",
-    "develop": "gatsby develop",
-    "format": "prettier --write src/**/*.{js,jsx,ts,tsx}",
-    "start": "npm run develop",
-    "serve": "gatsby serve",
-    "lint": "eslint --ignore-path .gitignore . --ext ts --ext tsx --ext js --ext jsx",
-    "lint:fix": "yarn lint --fix",
-    "test": "jest"
-  },
   "dependencies": {
-    "gatsby": "^2.4.3",
-    "gatsby-plugin-less": "^2.0.13",
-    "gatsby-plugin-manifest": "^2.1.1",
-    "gatsby-plugin-react-helmet": "^3.0.12",
-    "gatsby-plugin-typescript": "^2.0.13",
-    "immutability-helper": "^3.0.1",
-    "less": "^3.10.3",
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.4.0",
+    "@testing-library/user-event": "^7.2.1",
+    "@types/jest": "^24.0.25",
+    "@types/lodash": "^4.14.149",
+    "@types/node": "^12.12.22",
+    "@types/react": "^16.9.17",
+    "@types/react-dom": "^16.9.4",
+    "@types/react-router": "^5.1.3",
+    "@types/react-router-dom": "^5.1.3",
+    "@types/styled-components": "^4.4.1",
     "lodash": "^4.17.15",
-    "react": "^16.8.6",
+    "react": "^16.12.0",
     "react-dom": "^16.12.0",
-    "react-helmet": "^5.2.1",
-    "react-redux": "^7.1.3",
+    "react-router-dom": "^5.1.2",
+    "react-scripts": "3.3.0",
     "semantic-ui-less": "^2.4.1",
     "semantic-ui-react": "^0.88.2",
-    "styled-components": "^4.4.1"
+    "styled-components": "^4.4.1",
+    "typescript": "^3.7.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   },
   "devDependencies": {
-    "@hot-loader/react-dom": "^16.11.0",
-    "@types/jest": "^24.0.25",
-    "@types/jest-in-case": "^1.0.1",
-    "@types/lodash": "^4.14.149",
-    "@types/react-helmet": "^5.0.8",
-    "@types/styled-components": "^4.4.1",
-    "@typescript-eslint/eslint-plugin": "^1.9.0",
-    "@typescript-eslint/parser": "^1.9.0",
-    "babel-jest": "^24.9.0",
-    "babel-preset-gatsby": "^0.2.26",
-    "eslint": "^5.16.0",
-    "eslint-config-prettier": "^4.2.0",
-    "eslint-plugin-prettier": "^3.1.0",
-    "eslint-plugin-react": "^7.13.0",
-    "husky": "^2.2.0",
-    "identity-obj-proxy": "^3.0.0",
-    "jest": "^24.9.0",
-    "jest-in-case": "^1.0.2",
-    "jsdom": "^9.4.0",
-    "lint-staged": "^8.1.6",
-    "path": "^0.12.7",
-    "prettier": "^1.17.0",
-    "react-test-renderer": "^16.12.0",
-    "typescript": "^3.4.5"
+    "eslint": "^6.8.0"
   }
 }

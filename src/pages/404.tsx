@@ -2,7 +2,7 @@ import React from "react";
 
 import "./styles.css";
 
-const home = () => (
+const notFound = () => (
   <div className="home">
     <title>404</title>
     <div className="page">
@@ -14,4 +14,4 @@ const home = () => (
   </div>
 );
 
-export default home;
+export default notFound;

@@ -187,7 +187,7 @@ const move = (state: GameState, direction: string): GameState => {
 	}
 	const out = cloneDeep<GameState>(state)
 	out.stepCounter++
-	if (out.activeBlock == undefined) {
+	if (out.activeBlock === undefined) {
 		return initNextBlock(out)
 	}
 	const blockChecker = cloneDeep<block>(out.activeBlock)
