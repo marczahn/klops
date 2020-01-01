@@ -1,6 +1,6 @@
 import {ExternalGameState, GameControls} from '../../services/interfaces'
 import React, {FC, useEffect, useState} from 'react'
-import {BLOCK_CREATED, LINES_COMPLETED} from '../../services/local'
+import {blockCreated, linesCompleted} from '../../services/local'
 import Matrix from './Matrix'
 
 interface Props {
@@ -26,12 +26,12 @@ const Scoreboard: FC<Props> = (props: Props) => {
 
 	const update = (state: ExternalGameState, action: string) => {
 		switch (action) {
-			case LINES_COMPLETED:
+			case linesCompleted:
 				setLineCount(state.lineCount)
 				setPoints(state.points)
 				setLevel(state.level)
 				break
-			case BLOCK_CREATED:
+			case blockCreated:
 				setBlockCount(state.blockCount)
 				setNextBlock(state.nextBlock)
 				break

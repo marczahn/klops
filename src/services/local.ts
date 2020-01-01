@@ -9,9 +9,14 @@ const RIGHT = 'right'
 const ROTATE = 'rotate'
 export const LOOPED = 'looped'
 
-export const BLOCK_CREATED = 'BLOCK_CREATED'
-export const LINES_COMPLETED = 'LINES_COMPLETED'
-export const GAME_ENDED = 'GAME_ENDED'
+export const blockCreated = 'blockCreated'
+export const linesCompleted = 'linesCompleted'
+export const statusChanged = 'statusChanged'
+
+export const statusWaiting = 'waiting'
+export const statusRunning = 'running'
+export const statusEnded = 'ended'
+export const statusPaused = 'paused'
 
 const LEVEL_THRESHOLD = 10
 const BASE_LOOP_INTERVAL = 600
@@ -26,7 +31,7 @@ interface GameState {
 	// active block exists as long as it can move by tetris rules
 	activeBlock?: block
 	nextBlock: block
-	ended: boolean
+	status: string
 	loopInterval: number
 	stepCounter: number
 	blockCount: number
@@ -47,7 +52,7 @@ export const start = (cols: number, rows: number): GameControls => {
 		matrix: createMarix(cols, rows),
 		cols,
 		rows,
-		ended: false,
+		status: statusWaiting,
 		loopInterval: -1,
 		stepCounter: 0,
 		blockCount: 0,
@@ -66,30 +71,41 @@ export const start = (cols: number, rows: number): GameControls => {
 	}
 	const getState = (): GameState => state
 	// For some reason when I move the userQueue stuff into a separate function we run into heavy performance issues on rotating
-	state.loopInterval = window.setInterval(() => {
-		if (state.userQueue.length > 0) {
-			while (true) {
-				const action = state.userQueue.shift()
-				if (!action) {
-					break
-				}
-				switch (action) {
-					case ROTATE:
-						state = rotate(state)
+	const start = () => {
+		window.clearInterval(state.loopInterval)
+		state.loopInterval = window.setInterval(() => {
+			if (state.userQueue.length > 0) {
+				while (true) {
+					const action = state.userQueue.shift()
+					if (!action) {
 						break
-					case LEFT:
-					case RIGHT:
-					case DOWN:
-						state = move(state, action)
-						break
+					}
+					switch (action) {
+						case ROTATE:
+							state = rotate(state)
+							break
+						case LEFT:
+						case RIGHT:
+						case DOWN:
+							state = move(state, action)
+							break
+					}
 				}
+				publish(state, LOOPED)
+				return
 			}
+			loop(getState, setState)
 			publish(state, LOOPED)
-			return
-		}
-		loop(getState, setState)
-		publish(state, LOOPED)
-	}, 10)
+		}, 10)
+		state.status = statusRunning
+	}
+
+	const pause = () => {
+		window.clearInterval(state.loopInterval)
+		state.status = statusPaused
+	}
+
+	state.status = statusRunning
 
 	return {
 		getGameState: (): ExternalGameState => toExternalGameState(state),
@@ -105,8 +121,14 @@ export const start = (cols: number, rows: number): GameControls => {
 		moveDown: () => {
 			state.userQueue.push(DOWN)
 		},
-		stopGame: () => {
-			state = stopGame(state)
+		stop: () => {
+			state = stop(state)
+		},
+		run: () => {
+			start()
+		},
+		pause: () => {
+			pause()
 		},
 		addListener: (listener: (state: ExternalGameState, action: string) => void) => {
 			state = addListener(state, listener)
@@ -134,7 +156,7 @@ const toExternalGameState = (state: GameState): ExternalGameState => ({
 	rows: state.rows,
 	cols: state.cols,
 	lineCount: state.lineCount,
-	ended: state.ended,
+	status: state.status,
 	counter: state.stepCounter,
 	blockCount: state.blockCount,
 	nextBlock: convertBlockToMatrix(state.nextBlock),
@@ -172,17 +194,17 @@ const publish = (state: GameState, action: string) => {
 	state.listeners.forEach(listener => listener(out, action))
 }
 
-const stopGame = (state: GameState): GameState => {
+const stop = (state: GameState): GameState => {
 	window.clearInterval(state.loopInterval)
 	console.log('Game ended')
 	const out = cloneDeep<GameState>(state)
-	out.ended = true
-	publish(out, GAME_ENDED)
+	out.status = statusEnded
+	publish(out, statusChanged)
 	return out
 }
 
 const move = (state: GameState, direction: string): GameState => {
-	if (state.ended) {
+	if (state.status === statusEnded) {
 		return state
 	}
 	const out = cloneDeep<GameState>(state)
@@ -229,9 +251,9 @@ const initNextBlock = (state: GameState): GameState => {
 	out.blockCount++
 	const blocked = isBlocked(out.matrix, out.activeBlock)
 	out.matrix = drawBlock(out.matrix, out.activeBlock)
-	publish(out, BLOCK_CREATED)
+	publish(out, blockCreated)
 	if (blocked) {
-		return stopGame(out)
+		return stop(out)
 	}
 
 	return out
@@ -256,7 +278,7 @@ const updateLines = (state: GameState): GameState => {
 	out.level = Math.floor(out.lineCount / LEVEL_THRESHOLD)
 	debugger
 	out.points += calculatePoints(foundLines.length, out.level)
-	publish(out, LINES_COMPLETED)
+	publish(out, linesCompleted)
 
 	out.matrix = dropLinesFromMatrix(state.matrix, foundLines)
 	return out
@@ -297,7 +319,7 @@ const calculatePoints = (foundLines: number, level: number): number => {
 }
 
 const rotate = (state: GameState): GameState => {
-	if (!state.activeBlock || state.ended) {
+	if (!state.activeBlock || state.status === statusEnded) {
 		return state
 	}
 	const out = cloneDeep(state)

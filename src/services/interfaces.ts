@@ -13,7 +13,7 @@ export interface ExternalGameState {
 	matrix: number[][]
 	cols: number
 	rows: number
-	ended: boolean
+	status: string
 	counter: number
 	blockCount: number
 	nextBlock: number[][]
@@ -29,6 +29,8 @@ export interface GameControls {
 	moveLeft: () => void
 	moveRight: () => void
 	moveDown: () => void
-	stopGame: () => void
+	stop: () => void
+	run: () => void
+	pause: () => void
 	addListener: (listener: (state: ExternalGameState, action: string) => void) => void
 }
