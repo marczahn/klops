@@ -12,9 +12,7 @@ const seo = {
 }
 
 const index = () => (
-	<Container>
-		IRgendein text
-	</Container>
+		<div>Iggendein text</div>
 )
 
 export default index

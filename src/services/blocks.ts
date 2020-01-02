@@ -9,7 +9,7 @@ Fields are described by 2d vectors. Example:
 
 consists of 4 vectors (x/y) - one for each field: 0/0, 0/1, 1/1, 2/1
 
-As you can see these vectors are relative to a start vector.
+As you can see these vectors are relative to a create vector.
 
 TODO - Add weights or simply add blockCount multiple times to increase their occurences
  */

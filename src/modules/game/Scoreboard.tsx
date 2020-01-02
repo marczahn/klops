@@ -1,10 +1,10 @@
-import {ExternalGameState, GameControls} from '../../services/interfaces'
+import {ExternalGameState, GameHandle} from '../../services/interfaces'
 import React, {FC, useEffect, useState} from 'react'
 import {blockCreated, linesCompleted} from '../../services/local'
 import Matrix from './Matrix'
 
 interface Props {
-	gameControls: GameControls
+	gameControls: GameHandle
 }
 
 const Scoreboard: FC<Props> = (props: Props) => {
@@ -16,7 +16,7 @@ const Scoreboard: FC<Props> = (props: Props) => {
 
 	useEffect(() => {
 		// We keep this within a function to keep the stack of Scoreboard clean
-		const state = props.gameControls.getGameState()
+		const state = props.gameControls.getState()
 		setLineCount(state.lineCount)
 		setBlockCount(state.blockCount)
 		setLevel(state.level)

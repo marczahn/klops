@@ -1,14 +1,14 @@
 import React, {FC, useEffect, useState} from 'react'
-import {ExternalGameState, GameControls} from '../../services/interfaces'
+import {ExternalGameState, GameHandle} from '../../services/interfaces'
 import {LOOPED} from '../../services/local'
 import Matrix from './Matrix'
 
 interface Props {
-	gameControls: GameControls;
+	gameControls: GameHandle;
 }
 
 const Board: FC<Props> = (props: Props) => {
-	const [gameState, setGameState] = useState<ExternalGameState>(props.gameControls.getGameState)
+	const [gameState, setGameState] = useState<ExternalGameState>(props.gameControls.getState)
 	// counter is used to trigger a rerendering of the matrix
 	const [_, setCounter] = useState<number>(0)
 

@@ -10,21 +10,23 @@ export interface block {
 }
 
 export interface ExternalGameState {
-	matrix: number[][]
-	cols: number
-	rows: number
-	status: string
-	counter: number
-	blockCount: number
-	nextBlock: number[][]
+	readonly id: string
+	readonly matrix: number[][]
+	readonly cols: number
+	readonly rows: number
+	readonly status: string
+	readonly counter: number
+	readonly blockCount: number
+	readonly nextBlock: number[][]
 
-	lineCount: number
-	points: number
-	level: number
+	readonly lineCount: number
+	readonly points: number
+	readonly level: number
+	readonly name: string
 }
 
-export interface GameControls {
-	getGameState: () => ExternalGameState
+export interface GameHandle {
+	getState: () => ExternalGameState
 	rotate: () => void
 	moveLeft: () => void
 	moveRight: () => void
@@ -33,4 +35,12 @@ export interface GameControls {
 	run: () => void
 	pause: () => void
 	addListener: (listener: (state: ExternalGameState, action: string) => void) => void
+}
+
+export interface GameProps {
+	id: string
+	cols: number
+	rows: number
+	name: string
+
 }

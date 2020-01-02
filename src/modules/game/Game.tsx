@@ -1,19 +1,25 @@
 import React, {FC, useEffect} from 'react'
 import Board from './Board'
-import {start} from '../../services/local'
+import {create} from '../../services/local'
 import Scoreboard from './Scoreboard'
-import {Container} from 'semantic-ui-react'
+import Controls from './Controls'
+import {useParams} from 'react-router'
+import {loadGameProps} from '../../services/store'
 
 const Game: FC = () => {
-	const controls = start(10, 20)
+	const {gameId} = useParams()
+	console.log(gameId)
+	const gameProps = loadGameProps(gameId || '')
+	const controls = create(gameProps)
 
 	useEffect(controls.run, [])
 
 	return (
-		<Container>
+		<>
+			<Controls gameControls={controls}/>
 			<Scoreboard gameControls={controls}/>
 			<Board gameControls={controls}/>
-		</Container>
+		</>
 	)
 }
 export default Game

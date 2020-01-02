@@ -1,25 +1,26 @@
 import React from 'react'
 import './App.css'
-import {Redirect, Route, Router, Switch} from 'react-router-dom'
+import {BrowserRouter, Redirect, Route, Switch} from 'react-router-dom'
 import index from './pages'
-import createBrowserHistory from 'history/createBrowserHistory'
-import games from './pages/games'
+import Games from './pages/Games'
 import game from './pages/game'
+import Lobby from './pages/Lobby'
+import {Container} from 'semantic-ui-react'
 
 const App: React.FC = () => {
 	return (
 		<div className="App">
-			<header className="App-header">
-
-			</header>
-			<Router history={createBrowserHistory()}>
-				<Switch>
-					<Route component={index} exact path="/" />
-					<Route component={games} exact path="/games" />
-					<Route component={game} path="/games/:game" />
-					<Redirect to="/" />
-				</Switch>
-			</Router>
+			<Container>
+				<BrowserRouter>
+					<Switch>
+						<Route component={index} exact path="/"/>
+						<Route component={Games} exact path="/games"/>
+						<Route component={game} path="/games/:gameId"/>
+						<Route component={Lobby} path="/lobby/:gameId"/>
+						<Redirect to="/"/>
+					</Switch>
+				</BrowserRouter>
+			</Container>
 		</div>
 	)
 }

@@ -1,6 +1,6 @@
-import {cloneDeep} from './clone'
+import {cloneDeep, uuidv4} from './utils'
 import {blockVectorFactory} from './blocks'
-import {block, ExternalGameState, GameControls, vector} from './interfaces'
+import {block, ExternalGameState, GameHandle, GameProps, vector} from './interfaces'
 
 const emptyField = 0
 const DOWN = 'down'
@@ -25,6 +25,7 @@ const BASE_LOOP_INTERVAL = 600
 const LOOP_INTERVAL_DIVIDER = 6
 
 interface GameState {
+	readonly id: string
 	matrix: number[][]
 	cols: number
 	rows: number
@@ -44,14 +45,16 @@ interface GameState {
 	points: number
 	level: number
 	lastLoopIteration: number
+	name: string
 }
 
-export const start = (cols: number, rows: number): GameControls => {
+export const create = (props: GameProps): GameHandle => {
 	const blockFactory = blockVectorFactory()
 	let state: GameState = {
-		matrix: createMarix(cols, rows),
-		cols,
-		rows,
+		id: props.id,
+		matrix: createMatrix(props.cols, props.rows),
+		cols: props.cols,
+		rows: props.rows,
 		status: statusWaiting,
 		loopInterval: -1,
 		stepCounter: 0,
@@ -59,8 +62,9 @@ export const start = (cols: number, rows: number): GameControls => {
 		listeners: [],
 		userQueue: [],
 		blockFactory: blockVectorFactory(),
-		nextBlock: createBlock(cols, blockFactory),
+		nextBlock: createBlock(props.cols, blockFactory),
 		lastLoopIteration: 0,
+		name: props.name,
 
 		lineCount: 0,
 		points: 0,
@@ -72,6 +76,9 @@ export const start = (cols: number, rows: number): GameControls => {
 	const getState = (): GameState => state
 	// For some reason when I move the userQueue stuff into a separate function we run into heavy performance issues on rotating
 	const start = () => {
+		if (state.status === statusEnded) {
+			throw 'Game ended already'
+		}
 		window.clearInterval(state.loopInterval)
 		state.loopInterval = window.setInterval(() => {
 			if (state.userQueue.length > 0) {
@@ -101,14 +108,15 @@ export const start = (cols: number, rows: number): GameControls => {
 	}
 
 	const pause = () => {
+		if (state.status !== statusRunning) {
+			return
+		}
 		window.clearInterval(state.loopInterval)
 		state.status = statusPaused
 	}
 
-	state.status = statusRunning
-
 	return {
-		getGameState: (): ExternalGameState => toExternalGameState(state),
+		getState: (): ExternalGameState => toExternalGameState(state),
 		rotate: () => {
 			state.userQueue.push(ROTATE)
 		},
@@ -139,7 +147,10 @@ export const start = (cols: number, rows: number): GameControls => {
 const loop = (getState: () => GameState, setState: (state: GameState) => void) => {
 	const now = Date.now()
 	const state = getState()
-	if (now - state.lastLoopIteration < calculateLoopInterval(BASE_LOOP_INTERVAL, LOOP_INTERVAL_DIVIDER, state.level)) {
+	if (
+		state.status !== statusRunning ||
+		now - state.lastLoopIteration < calculateLoopInterval(BASE_LOOP_INTERVAL, LOOP_INTERVAL_DIVIDER, state.level)
+	) {
 		return
 	}
 	state.lastLoopIteration = now
@@ -152,6 +163,7 @@ const calculateLoopInterval = (baseInterval: number, intervalDivider: number, le
 	baseInterval * (1 - (level / intervalDivider))
 
 const toExternalGameState = (state: GameState): ExternalGameState => ({
+	id: state.id,
 	matrix: cloneDeep<number[][]>(state.matrix),
 	rows: state.rows,
 	cols: state.cols,
@@ -162,6 +174,7 @@ const toExternalGameState = (state: GameState): ExternalGameState => ({
 	nextBlock: convertBlockToMatrix(state.nextBlock),
 	level: state.level,
 	points: state.points,
+	name: state.name,
 })
 
 const convertBlockToMatrix = (block: block): number[][] => {
@@ -204,7 +217,7 @@ const stop = (state: GameState): GameState => {
 }
 
 const move = (state: GameState, direction: string): GameState => {
-	if (state.status === statusEnded) {
+	if (state.status !== statusRunning) {
 		return state
 	}
 	const out = cloneDeep<GameState>(state)
@@ -285,7 +298,7 @@ const updateLines = (state: GameState): GameState => {
 }
 
 const dropLinesFromMatrix = (matrix: number[][], foundLines: number[]): number[][] => {
-	const newMatrix = createMarix(matrix[0].length, foundLines.length)
+	const newMatrix = createMatrix(matrix[0].length, foundLines.length)
 	for (const row in matrix) {
 		if (foundLines.includes(parseInt(row))) {
 			continue
@@ -319,7 +332,7 @@ const calculatePoints = (foundLines: number, level: number): number => {
 }
 
 const rotate = (state: GameState): GameState => {
-	if (!state.activeBlock || state.status === statusEnded) {
+	if (!state.activeBlock || state.status !== statusRunning) {
 		return state
 	}
 	const out = cloneDeep(state)
@@ -403,7 +416,7 @@ const createBlock = (cols: number, blockFactory: (zero: vector) => block): block
 	return blockFactory({x: Math.floor(cols / 2), y: 0})
 }
 
-const createMarix = (cols: number, rows: number): number[][] => {
+export const createMatrix = (cols: number, rows: number): number[][] => {
 	const out: number[][] = []
 	for (let y = 0; y < rows; y++) {
 		const row: number[] = []
