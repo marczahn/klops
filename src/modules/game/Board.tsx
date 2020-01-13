@@ -1,52 +1,62 @@
-import React, {FC, useEffect, useState} from 'react'
-import {ExternalGameState, GameHandle} from '../../services/interfaces'
-import {LOOPED} from '../../services/local'
-import Matrix from './Matrix'
+import React, { FC, useEffect, useState } from 'react'
+import { looped } from '../../services/local'
+import PrintMatrix from './PrintMatrix'
+import { GameHandle, GameState } from '../../models/game';
 
 interface Props {
-	gameControls: GameHandle;
+    game: GameHandle;
 }
 
 const Board: FC<Props> = (props: Props) => {
-	const [gameState, setGameState] = useState<ExternalGameState>(props.gameControls.getState)
-	// counter is used to trigger a rerendering of the matrix
-	const [_, setCounter] = useState<number>(0)
+    const [gameState, setGameState] = useState<GameState>()
+    // counter is used to trigger a rendering of the matrix
+    const [_, setCounter] = useState<number>(0)
 
-	useEffect(() => {
-		props.gameControls.addListener((state: ExternalGameState, action: string) => {
-			if (action !== LOOPED) {
-				return
-			}
-			setGameState(state)
-			setCounter(state.counter)
-		})
-	}, [])
+    const handleArrowPress = (e: KeyboardEvent) => {
+        switch (e.code) {
+            case 'ArrowRight':
+                props.game.moveRight()
+                break
+            case 'ArrowLeft':
+                props.game.moveLeft()
+                break
+            case 'ArrowDown':
+                props.game.moveDown()
+                break
+            case 'ArrowUp':
+                props.game.rotate()
+                break
+        }
+    }
 
-	const handleArrowPress = (e: KeyboardEvent) => {
-		switch (e.code) {
-			case 'ArrowRight':
-				props.gameControls.moveRight()
-				break
-			case 'ArrowLeft':
-				props.gameControls.moveLeft()
-				break
-			case 'ArrowDown':
-				props.gameControls.moveDown()
-				break
-			case 'ArrowUp':
-				props.gameControls.rotate()
-				break
-		}
-	}
+    useEffect(() => {
+        ( async () => {
+            // We keep this within a function to keep the stack of Scoreboard clean
+            const state = await props.game.getState()
+            setGameState(state)
+            setCounter(state.stepCount)
+        } )()
+        props.game.addListener((state: GameState, action: string) => {
+            if (action !== looped) {
+                return
+            }
+            setGameState(state)
+            setCounter(state.stepCount)
+        })
+    }, [])
 
-	useEffect(() => {
-		document.addEventListener('keydown', handleArrowPress)
-		return () => {
-			document.removeEventListener('keydown', handleArrowPress)
-			// When you switch the page
-		}
-	}, [])
+    useEffect(() => {
+        document.addEventListener('keydown', handleArrowPress)
+        return () => {
+            document.removeEventListener('keydown', handleArrowPress)
+            // When you switch the page
+        }
+    }, [])
 
-	return (<Matrix matrix={gameState.matrix} />)
+    return (
+        <>
+            { gameState && <PrintMatrix matrix={ gameState.matrix } /> }
+        </>
+    )
 }
 export default Board

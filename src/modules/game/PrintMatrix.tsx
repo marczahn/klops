@@ -1,11 +1,12 @@
 import React, {FC} from 'react'
 import {MatrixTable} from './matrix.sc'
+import { Matrix } from '../../models/game';
 
 interface Props {
-	matrix: number[][]
+	matrix: Matrix
 }
 
-const Matrix: FC<Props> = (props: Props) => {
+const PrintMatrix: FC<Props> = (props: Props) => {
 	let html = ''
 	for (let y = 0; y < props.matrix.length; y++) {
 		html += '<tr>'
@@ -17,4 +18,4 @@ const Matrix: FC<Props> = (props: Props) => {
 	return (<MatrixTable dangerouslySetInnerHTML={{__html: html}}/>)
 }
 
-export default Matrix
+export default PrintMatrix

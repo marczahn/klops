@@ -972,7 +972,7 @@ i.icon.find:before { content: "\f1e5"; }
 i.icon.first.aid:before { content: "\f0fa"; }
 i.icon.five.hundred.pixels:before { content: "\f26e"; }
 i.icon.fork:before { content: "\f126"; }
-i.icon.game:before { content: "\f11b"; }
+i.icon.play:before { content: "\f11b"; }
 i.icon.gay:before { content: "\f227"; }
 i.icon.gbp:before { content: "\f154"; }
 i.icon.gittip:before { content: "\f184"; }

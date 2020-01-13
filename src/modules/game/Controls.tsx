@@ -1,11 +1,8 @@
-import {ExternalGameState, GameHandle} from '../../services/interfaces'
-import React, {FC, useEffect, useState} from 'react'
-import {blockCreated, linesCompleted} from '../../services/local'
-import Matrix from './Matrix'
-import {Input} from 'semantic-ui-react'
+import React, { FC, useEffect } from 'react'
+import { GameHandle } from '../../models/game';
 
 interface Props {
-	gameControls: GameHandle
+	game: GameHandle
 }
 
 const Controls: FC<Props> = (props: Props) => {

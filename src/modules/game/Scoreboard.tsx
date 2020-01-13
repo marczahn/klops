@@ -1,56 +1,49 @@
-import {ExternalGameState, GameHandle} from '../../services/interfaces'
-import React, {FC, useEffect, useState} from 'react'
-import {blockCreated, linesCompleted} from '../../services/local'
-import Matrix from './Matrix'
+import React, { FC, useEffect, useState } from 'react'
+import { blockCreated, linesCompleted } from '../../services/local'
+import { GameHandle, GameState } from '../../models/game';
 
 interface Props {
-	gameControls: GameHandle
+    game: GameHandle
 }
 
 const Scoreboard: FC<Props> = (props: Props) => {
-	const [blockCount, setBlockCount] = useState<number>(0)
-	const [lineCount, setLineCount] = useState<number>(0)
-	const [points, setPoints] = useState<number>(0)
-	const [level, setLevel] = useState<number>(0)
-	const [nextBlock, setNextBlock] = useState<number[][]>([])
+    const [blockCount, setBlockCount] = useState<number>(0)
+    const [lineCount, setLineCount] = useState<number>(0)
+    const [level, setLevel] = useState<number>(0)
 
-	useEffect(() => {
-		// We keep this within a function to keep the stack of Scoreboard clean
-		const state = props.gameControls.getState()
-		setLineCount(state.lineCount)
-		setBlockCount(state.blockCount)
-		setLevel(state.level)
-		setNextBlock(state.nextBlock)
-		setPoints(state.points)
-	}, [])
+    useEffect(() => {
+        ( async () => {
+            // We keep this within a function to keep the stack of Scoreboard clean
+            const state = await props.game.getState()
+            setLineCount(state.lineCount || 0)
+            setBlockCount(state.blockCount)
+            setLevel(state.level)
+        } )()
+    }, [])
 
-	const update = (state: ExternalGameState, action: string) => {
-		switch (action) {
-			case linesCompleted:
-				setLineCount(state.lineCount)
-				setPoints(state.points)
-				setLevel(state.level)
-				break
-			case blockCreated:
-				setBlockCount(state.blockCount)
-				setNextBlock(state.nextBlock)
-				break
-		}
-	}
+    const update = (state: GameState, action: string) => {
+        switch (action) {
+            case linesCompleted:
+                setLineCount(state.lineCount || 0)
+                setLevel(state.level)
+                break
+            case blockCreated:
+                setBlockCount(state.blockCount)
+                break
+        }
+    }
 
-	props.gameControls.addListener(update)
+    props.game.addListener(update)
 
-	return (
-		<>
-			<div>Lines: {lineCount}</div>
-			<div>Points: {points}</div>
-			<div>Level: {level}</div>
-			<div>Blocks: {blockCount}</div>
-			<div>Next block:
-			<Matrix matrix={nextBlock}/>
-			</div>
-		</>
-	)
+    return (
+        <>
+            <div>Lines: { lineCount }</div>
+            <div>Level: { level }</div>
+            <div>Blocks: { blockCount }</div>
+            <div>Next block:
+            </div>
+        </>
+    )
 }
 
 export default Scoreboard
