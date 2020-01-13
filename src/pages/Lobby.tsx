@@ -4,8 +4,9 @@ import PrintMatrix from '../modules/game/PrintMatrix'
 import { createMatrix } from '../services/local'
 import { useHistory, useParams } from 'react-router'
 import { GameHandle, GameState } from '../models/game';
-import { getGameHandle } from '../services/game';
-import { connectToGame } from '../services/backend';
+import { getGameHandle, onGamesList } from '../services/game';
+import { connectToGame, connectToList } from '../services/backend';
+import ConnectionLost from '../modules/ConnectionClosed';
 
 const Lobby: FC = () => {
     const history = useHistory()
@@ -17,6 +18,31 @@ const Lobby: FC = () => {
     const [name, setName] = useState<string>('The greatest game')
     const [cols, setCols] = useState<number>(10)
     const [rows, setRows] = useState<number>(20)
+
+    const [connectionLost, setConnectionLost] = useState<boolean>(false)
+
+    const reconnect = async () => {
+        await connect()
+    }
+
+    const connect = async () => {
+        try {
+            setConnectionLost(false)
+            const conn = await connectToList()
+            conn.addCloseListener(closedHandler)
+            const gh = getGameHandle(await connectToGame(gid))
+            gh.addListener(configChanged)
+            gh.config(cols, rows, name)
+            setGameHandle(gh)
+            conn.send('send_games', null)
+        } catch (e) {
+            setConnectionLost(true)
+        }
+    }
+
+    const closedHandler = () => {
+        setConnectionLost(true)
+    }
 
     const configChanged = (state: GameState, event: string) => {
         switch (event) {
@@ -34,10 +60,7 @@ const Lobby: FC = () => {
 
     useEffect(() => {
         ( async () => {
-            const gh = getGameHandle(await connectToGame(gid))
-            gh.addListener(configChanged)
-            gh.config(cols, rows, name)
-            setGameHandle(gh)
+            connect()
         } )()
         return () => {
             if (gameHandle) {
@@ -81,6 +104,7 @@ const Lobby: FC = () => {
 
     return (
         <>
+            {connectionLost && (<ConnectionLost reconnect={reconnect}/>)}
             <Input onChange={ onChange } value={ name } label="Name" name="name" />
             <Input onChange={ onChange } value={ !isNaN(cols) ? cols : '' } label="Columns" name="cols" />
             <Input onChange={ onChange } value={ !isNaN(rows) ? rows : '' } label="Rows" name="rows" />

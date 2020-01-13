@@ -20,22 +20,21 @@ const connectToBackend = (gameId?: string): Promise<BackendConnection> => {
     let closeListeners: ( (event: WebSocketCloseEvent) => void )[] = []
     ws.onmessage = (e: WebSocketMessageEvent) => {
         const {event, data} = disassembleMessage(e.data)
-        console.log(messageListeners)
+        console.log('ws message', e)
         messageListeners.forEach(l => l(event, data))
-        console.log('WS response', e)
     }
     ws.onclose = (event: WebSocketCloseEvent) => {
-        console.log('WS connection closed')
+        console.log(`connection closed with ${event.code}`)
         closeListeners.forEach(l => l(event))
 
         // if (event.code !== 1005) {
         //     // TODO - Checklater for websocket disconnects
         // }
     }
-    return new Promise<BackendConnection>((res, rej) => {
+    return new Promise<BackendConnection>((resolve, reject) => {
         ws.onopen = () => {
             console.log('Open ws connection')
-            res({
+            resolve({
                 removeMessageListener: (l: MessageListener) => {
                     messageListeners = messageListeners.filter(listener => l !== listener)
                 },
@@ -56,7 +55,7 @@ const connectToBackend = (gameId?: string): Promise<BackendConnection> => {
         }
         ws.onerror = (e: Event) => {
             console.log('WS could not be opened with', e)
-            rej(e)
+            reject(e)
         }
     })
 }
