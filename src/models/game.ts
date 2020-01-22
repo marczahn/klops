@@ -3,6 +3,7 @@ export type GameStateListener = (state: GameState, event: string) => void
 
 export interface GameState {
     id: string
+    owner: string
     cols: number
     name: string
     rows: number
@@ -33,6 +34,12 @@ export interface GameHandle {
     quit: () => void
 }
 
+export interface Participant {
+    id: string
+    name: string
+    points: number
+}
+
 export type Matrix = number[][]
 
 export interface Vector {
@@ -59,6 +66,11 @@ export interface BackendConnection {
     removeMessageListener: (l: MessageListener) => void
     addCloseListener: (l: CloseListener) => void
     removeCloseListener: (l: CloseListener) => void
-    send: (event: string, data: any) => void
+    send: <T>(command: string, data?: any, timeout?: number) => Promise<T>
     close: () => void
+}
+
+export interface Player {
+    name: string
+    id: string
 }

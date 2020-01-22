@@ -1,6 +1,6 @@
 import { BackendConnection, GameHandle, GameState, GameStateListener, Player } from '../models/game';
 
-export const onGamesList = (onUpdate: (games: GameState[]) => void): ((event: string, data: string) => void) => {
+export const onGamesList = (onUpdate: (games: GameState[]) => void): ( (event: string, data: string) => void ) => {
     return (event: string, data: string) => {
         switch (event) {
             case 'game_added':
@@ -11,8 +11,12 @@ export const onGamesList = (onUpdate: (games: GameState[]) => void): ((event: st
     }
 }
 
-export const createGame = async (conn: BackendConnection) => {
-    conn.send('add_game', {})
+export const createGame = async (conn: BackendConnection): Promise<GameState> => {
+    return conn.send<GameState>('create_game')
+}
+
+export const enterGame = async (conn: BackendConnection, gameId: string): Promise<string> => {
+    return conn.send<string>('enter_game', gameId)
 }
 
 export const getGameHandle = (conn: BackendConnection): GameHandle => {
@@ -29,7 +33,6 @@ export const getGameHandle = (conn: BackendConnection): GameHandle => {
     conn.addCloseListener(closeListener)
     // Now we initialize the game state by requesting the current gamestate - send_state does not need any data
     // since the connection is alray bound to a game
-    conn.send('send_state', null)
     return {
         addListener: (l: GameStateListener) => {
             listeners.push(l)
@@ -37,19 +40,16 @@ export const getGameHandle = (conn: BackendConnection): GameHandle => {
         addPlayer: (p1: Player) => {
         },
         getState: (): Promise<GameState> => {
-            const p = new Promise<GameState>((res, rej) => {
+            const p = new Promise<GameState>(async (res, rej) => {
                 if (gameState) {
                     res(gameState)
                     return
                 }
-                const listener = (event: string, data: string) => {
-                    // game handle needs to receive each update so there is no check for the event
-                    gameState = JSON.parse(data)
-                    res(gameState)
-                    conn.removeMessageListener(listener)
+                try {
+                    res(await conn.send<GameState>('send_state'))
+                } catch (e) {
+                    rej(e)
                 }
-                conn.addMessageListener(listener)
-                conn.send('send_state', null)
             })
             return p
         },
@@ -75,7 +75,7 @@ export const getGameHandle = (conn: BackendConnection): GameHandle => {
             conn.removeCloseListener(closeListener)
         },
         quit: () => {
-            conn.send('quit_game', null)
+            conn.send('quit_game')
         }
     }
 }
