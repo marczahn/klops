@@ -22,6 +22,9 @@ const App: React.FC = () => {
     const connect = async () => {
         try {
             const conn = await connectToList(getPlayerId())
+            conn.addCloseListener((event: WebSocketCloseEvent) => {
+                console.log('WS closed with ' + event.code)
+            })
             setConn(conn)
         } catch (e) {
             if (conn) {

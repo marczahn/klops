@@ -50,7 +50,8 @@ const LobbyControls: FC<Props> = (props: Props) => {
         conn.send('cancel_game')
     }
 
-    const onLeave = () => {
+    const onLeave = async () => {
+        await conn.send('leave_game')
         history.push('/')
     }
 

@@ -66,10 +66,10 @@ const connectToBackend = (playerId: string): Promise<BackendConnection> => {
                     ws.close()
                 },
                 send: <T>(command: string, data?: any, timeout?: number): Promise<T> => {
-                    const id = uuidv4()
+                    const commandId = uuidv4()
                     return new Promise<T>((resolve, reject) => {
                         const commandListener: MessageListener = (event: string, data: string) => {
-                            if (event !== `response_${ id }`) {
+                            if (event !== `response_${ commandId }`) {
                                 return
                             }
                             const rsp: CommandResponse<T> = JSON.parse(data)
@@ -80,12 +80,12 @@ const connectToBackend = (playerId: string): Promise<BackendConnection> => {
                             reject(rsp.errors)
                         }
                         messageListeners.push(commandListener)
-                        const msg = assembleMessage(command, id, data)
+                        const msg = assembleMessage(command, commandId, data)
                         console.log('Send message:', msg)
                         ws.send(msg)
                         window.setTimeout(() => {
                             removeMessageListener(commandListener)
-                            reject('no response received')
+                            reject(`no response received for command ${command} and command id ${commandId}`)
                         }, timeout ? timeout : 5000)
                     })
                 }
