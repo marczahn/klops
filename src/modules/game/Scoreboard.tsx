@@ -19,7 +19,7 @@ const Scoreboard: FC<Props> = (props: Props) => {
             setBlockCount(state.blockCount)
             setLevel(state.level)
         } )()
-    }, [])
+    }, [props.game])
 
     const update = (state: GameState, action: string) => {
         switch (action) {

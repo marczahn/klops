@@ -1,7 +1,7 @@
 import React, { FC, useContext, useEffect, useState } from 'react'
 import { Button, Table } from 'semantic-ui-react'
 import { useHistory } from 'react-router'
-import { createGame, enterGame, onGamesList } from '../services/game';
+import { createGame, onGamesList } from '../services/game';
 import { BackendConnection, GameState } from '../models/game';
 import ConnectionContext from '../services/backend';
 import { Link } from 'react-router-dom';
@@ -25,7 +25,7 @@ const Index: FC<Props> = (props: Props) => {
         return () => {
             conn.removeMessageListener(listListener)
         }
-    }, [])
+    }, [conn])
     
     const onCreateGame = async () => {
         try {

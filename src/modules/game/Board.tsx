@@ -43,7 +43,7 @@ const Board: FC<Props> = (props: Props) => {
             setGameState(state)
             setCounter(state.stepCount)
         })
-    }, [])
+    }, [props.game])
 
     useEffect(() => {
         document.addEventListener('keydown', handleArrowPress)

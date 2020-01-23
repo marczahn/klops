@@ -1,7 +1,5 @@
 import { BackendConnection, GameState } from '../../models/game';
-import React, { FC, SyntheticEvent, useContext, useEffect, useState } from 'react';
-import { Button, Input } from 'semantic-ui-react';
-import { useHistory } from 'react-router';
+import React, { FC, useContext, useEffect, useState } from 'react';
 import PrintMatrix from '../game/PrintMatrix';
 import { createMatrix } from '../../services/local';
 import ConnectionContext from '../../services/backend';

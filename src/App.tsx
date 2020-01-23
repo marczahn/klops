@@ -15,17 +15,24 @@ const App: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(true)
     const [error, setError] = useState<any>()
     const [conn, setConn] = useState<BackendConnection>()
+    const [connLost, setConnLost] = useState<boolean>(true)
+
     const reconnect = async () => {
         await connect()
+    }
+
+    const closeListener = (event: WebSocketCloseEvent) => {
+        conn && conn.removeCloseListener(closeListener)
+        setConnLost(true)
+        reconnect()
     }
     
     const connect = async () => {
         try {
             const conn = await connectToList(getPlayerId())
-            conn.addCloseListener((event: WebSocketCloseEvent) => {
-                console.log('WS closed with ' + event.code)
-            })
+            conn.addCloseListener(closeListener)
             setConn(conn)
+            setConnLost(false)
         } catch (e) {
             if (conn) {
                 conn.close()
@@ -70,7 +77,7 @@ const App: React.FC = () => {
     
     return (
         <>
-            { conn ? (
+            { conn && !connLost ? (
                 <ConnectionContext.Provider value={ conn }>
                     {
                         !loggedIn || loading ? (

@@ -47,8 +47,7 @@ const Lobby: FC = () => {
         return () => {
             conn && conn.removeMessageListener(listener)
         }
-    }, [])
-
+    }, [conn])
 
     if (gid === '') {
         return ( <Message error>No game id provided</Message> )
