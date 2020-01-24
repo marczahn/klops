@@ -24,12 +24,15 @@ const Lobby: FC = () => {
             case 'game_not_found':
                 history.push('/')
                 break
+            case 'game_started':
+                conn.removeMessageListener(listener)
+                history.push(`/play/${gameId}`)
         }
     }
     
     const init = async (conn: BackendConnection) => {
         if (!gameId) {
-            // TODO - return to list
+            return
         }
         try {
             await enterGame(conn, gameId || '')

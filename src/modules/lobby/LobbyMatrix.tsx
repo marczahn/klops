@@ -1,6 +1,6 @@
 import { BackendConnection, GameState } from '../../models/game';
 import React, { FC, useContext, useEffect, useState } from 'react';
-import PrintMatrix from '../game/PrintMatrix';
+import PrintMatrix from '../shared/PrintMatrix';
 import { createMatrix } from '../../services/local';
 import ConnectionContext from '../../services/backend';
 

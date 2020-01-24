@@ -10,14 +10,14 @@ interface DisassembledMessage {
 }
 
 const ConnectionContext = React.createContext<BackendConnection>({
-    addCloseListener: (p1: CloseListener) => {
-    }, addMessageListener: (p1: MessageListener) => {
-    }, close: () => {
-    }, removeCloseListener: (p1: CloseListener) => {
-    }, removeMessageListener: (p1: MessageListener) => {
-    }, send: <T>(command: string, data?: any, timeout?: number) => {
+    addCloseListener: (p1: CloseListener) => {},
+    addMessageListener: (p1: MessageListener) => {},
+    close: () => {}, removeCloseListener: (p1: CloseListener) => {},
+    removeMessageListener: (p1: MessageListener) => {},
+    send: <T>(command: string, data?: any, timeout?: number) => {
         return new Promise<T>(() => {});
-    }
+    },
+    sendIgnore: (command: string, data?: any) => {}
 })
 
 export default ConnectionContext
@@ -88,6 +88,13 @@ const connectToBackend = (playerId: string): Promise<BackendConnection> => {
                             reject(`no response received for command ${command} and command id ${commandId}`)
                         }, timeout ? timeout : 5000)
                     })
+                },
+                // This is a fire and forgot method which is going to be used for movements
+                sendIgnore: (command: string, data?: any) => {
+                    const commandId = uuidv4()
+                    const msg = assembleMessage(command, commandId, data)
+                    console.log('Send message:', msg)
+                    ws.send(msg)
                 }
             })
         }

@@ -1,39 +1,45 @@
-import React, { FC, useEffect, useState } from 'react'
+import React, { FC, useContext, useEffect, useState } from 'react'
 import { blockCreated, linesCompleted } from '../../services/local'
-import { GameHandle, GameState } from '../../models/game';
+import { BackendConnection, GameHandle, GameState } from '../../models/game';
+import ConnectionContext from '../../services/backend';
 
 interface Props {
-    game: GameHandle
+    initialGameState: GameState
 }
 
 const Scoreboard: FC<Props> = (props: Props) => {
+    const conn = useContext<BackendConnection>(ConnectionContext)
     const [blockCount, setBlockCount] = useState<number>(0)
     const [lineCount, setLineCount] = useState<number>(0)
     const [level, setLevel] = useState<number>(0)
 
-    useEffect(() => {
-        ( async () => {
-            // We keep this within a function to keep the stack of Scoreboard clean
-            const state = await props.game.getState()
-            setLineCount(state.lineCount || 0)
-            setBlockCount(state.blockCount)
-            setLevel(state.level)
-        } )()
-    }, [props.game])
-
-    const update = (state: GameState, action: string) => {
-        switch (action) {
+    const listener = (event: string, data: string) => {
+        let state: GameState
+        switch (event) {
             case linesCompleted:
+                state = JSON.parse(data)
                 setLineCount(state.lineCount || 0)
                 setLevel(state.level)
                 break
             case blockCreated:
+                state = JSON.parse(data)
                 setBlockCount(state.blockCount)
                 break
         }
     }
 
-    props.game.addListener(update)
+    useEffect(() => {
+        ( async () => {
+            // We keep this within a function to keep the stack of Scoreboard clean
+            setLineCount(props.initialGameState.lineCount || 0)
+            setBlockCount(props.initialGameState.blockCount)
+            setLevel(props.initialGameState.level)
+            conn.addMessageListener(listener)
+            return () => {
+                conn.removeMessageListener(listener)
+            }
+        } )()
+    }, [conn])
 
     return (
         <>

@@ -3,6 +3,7 @@ import React, { FC, SyntheticEvent, useContext, useEffect, useState } from 'reac
 import { Button, Input } from 'semantic-ui-react';
 import { useHistory } from 'react-router';
 import ConnectionContext from '../../services/backend';
+import { startGame } from '../../services/game';
 
 interface Props {
     initialState: GameState
@@ -55,7 +56,8 @@ const LobbyControls: FC<Props> = (props: Props) => {
         history.push('/')
     }
 
-    const onStart = () => {
+    const onStart = async () => {
+        await startGame(conn)
         history.push('/games/' + props.initialState.id)
     }
     return (

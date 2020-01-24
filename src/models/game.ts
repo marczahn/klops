@@ -67,6 +67,7 @@ export interface BackendConnection {
     addCloseListener: (l: CloseListener) => void
     removeCloseListener: (l: CloseListener) => void
     send: <T>(command: string, data?: any, timeout?: number) => Promise<T>
+    sendIgnore: (command: string, data?: any) => void
     close: () => void
 }
 

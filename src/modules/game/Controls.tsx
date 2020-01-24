@@ -1,8 +1,8 @@
 import React, { FC, useEffect } from 'react'
-import { GameHandle } from '../../models/game';
+import { GameHandle, GameState } from '../../models/game';
 
 interface Props {
-	game: GameHandle
+	initialGameState: GameState
 }
 
 const Controls: FC<Props> = (props: Props) => {

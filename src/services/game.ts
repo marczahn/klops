@@ -11,6 +11,26 @@ export const onGamesList = (onUpdate: (games: GameState[]) => void): ( (event: s
     }
 }
 
+export const moveLeft = (conn: BackendConnection) => {
+    conn.sendIgnore('move_left')
+}
+
+export const moveDown = (conn: BackendConnection) => {
+    conn.sendIgnore('move_down')
+}
+
+export const moveRight = (conn: BackendConnection) => {
+    conn.sendIgnore('move_right')
+}
+
+export const rotate = (conn: BackendConnection) => {
+    conn.sendIgnore('rotate')
+}
+
+export const startGame = async (conn: BackendConnection): Promise<GameState> => {
+    return conn.send<GameState>('start_game')
+}
+
 export const createGame = async (conn: BackendConnection): Promise<GameState> => {
     return conn.send<GameState>('create_game')
 }
