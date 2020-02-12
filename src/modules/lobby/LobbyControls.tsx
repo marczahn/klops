@@ -1,4 +1,4 @@
-import { BackendConnection, GameState } from '../../models/game';
+import { BackendConnection, GameEvents, GameState } from '../../models/game';
 import React, { FC, SyntheticEvent, useContext, useEffect, useState } from 'react';
 import { Button, Input } from 'semantic-ui-react';
 import { useHistory } from 'react-router';
@@ -35,7 +35,7 @@ const LobbyControls: FC<Props> = (props: Props) => {
     }
     const listener = (event: string, data: string) => {
         switch (event) {
-            case 'config_updated':
+            case GameEvents.configUpdated:
                 setGameState(JSON.parse(data))
                 break
         }

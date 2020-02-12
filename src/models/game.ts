@@ -19,21 +19,6 @@ export interface GameState {
     stepCount: number // is the amount of steps that have been done so far (movements, rotates, etc.)
 }
 
-export interface GameHandle {
-    getState: () => Promise<GameState>
-    moveLeft: () => void
-    moveRight: () => void
-    moveDown: () => void
-    rotate: () => void
-    start: () => void
-    stop: () => void
-    addListener: (l: GameStateListener) => void
-    addPlayer: (p: Player) => void
-    disconnect: () => void
-    config: (cols: number, rows: number, name: string) => void
-    quit: () => void
-}
-
 export interface Participant {
     id: string
     name: string
@@ -74,4 +59,18 @@ export interface BackendConnection {
 export interface Player {
     name: string
     id: string
+}
+
+export enum GameEvents {
+    started = 'started',
+    looped = 'looped',
+    blockCreated = 'blockCreated',
+    linesCompleted = 'linesCompleted',
+    statusChanged = 'statusChanged',
+    roundDone = 'roundDone',
+    stopped = 'stopped',
+    nextBlockCreated = 'nextBlockCreated',
+    playerAdded = 'playerAdded',
+    playerRemoved = 'playerRemoved',
+    configUpdated = 'configUpdated',
 }

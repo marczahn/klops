@@ -11,10 +11,10 @@ const emptyField = 0
 // const RIGHT = 'right'
 // const ROTATE = 'rotate'
 
-export const looped = 'game_looped'
+export const looped = 'looped'
 
-export const blockCreated = 'blockCreated'
-export const linesCompleted = 'linesCompleted'
+export const blockCreated = 'block_created'
+export const linesCompleted = 'lines_completed'
 export const statusChanged = 'statusChanged'
 
 export const statusWaiting = 'waiting'

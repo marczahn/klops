@@ -1,4 +1,4 @@
-import { BackendConnection, GameState } from '../../models/game';
+import { BackendConnection, GameEvents, GameState } from '../../models/game';
 import React, { FC, useContext, useEffect, useState } from 'react';
 import PrintMatrix from '../shared/PrintMatrix';
 import { createMatrix } from '../../services/local';
@@ -14,7 +14,7 @@ const LobbyMatrix: FC<Props> = (props: Props) => {
     
     const listener = (event: string, data: string) => {
         switch (event) {
-            case 'config_updated':
+            case GameEvents.configUpdated:
                 setGameState(JSON.parse(data))
                 break
         }

@@ -1,7 +1,7 @@
 import React, { FC, useContext, useEffect, useState } from 'react'
-import { blockCreated, linesCompleted, looped } from '../../services/local'
+import { looped } from '../../services/local'
 import PrintMatrix from '../shared/PrintMatrix'
-import { BackendConnection, GameHandle, GameState } from '../../models/game';
+import { BackendConnection, GameState } from '../../models/game';
 import ConnectionContext from '../../services/backend';
 import { moveDown, moveLeft, moveRight, rotate } from '../../services/game';
 

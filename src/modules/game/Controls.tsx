@@ -1,5 +1,5 @@
 import React, { FC, useEffect } from 'react'
-import { GameHandle, GameState } from '../../models/game';
+import { GameState } from '../../models/game';
 
 interface Props {
 	initialGameState: GameState

@@ -5,6 +5,7 @@ import { createGame, onGamesList } from '../services/game';
 import { BackendConnection, GameState } from '../models/game';
 import ConnectionContext from '../services/backend';
 import { Link } from 'react-router-dom';
+import { statusWaiting } from '../services/local';
 
 interface Props {
     conn: BackendConnection
@@ -45,6 +46,7 @@ const Index: FC<Props> = (props: Props) => {
                     <Table.Row>
                         <Table.HeaderCell>Game name</Table.HeaderCell>
                         <Table.HeaderCell>Size</Table.HeaderCell>
+                        <Table.HeaderCell>Status</Table.HeaderCell>
                         <Table.HeaderCell>Players</Table.HeaderCell>
                         <Table.HeaderCell />
                     </Table.Row>
@@ -54,8 +56,9 @@ const Index: FC<Props> = (props: Props) => {
                         <Table.Row key={ i }>
                             <Table.Cell>{ game.name }</Table.Cell>
                             <Table.Cell>{ game.cols } x { game.rows }</Table.Cell>
+                            <Table.Cell>{ game.status }</Table.Cell>
                             <Table.Cell>{ game.players.length }</Table.Cell>
-                            <Table.Cell><Link to={ `/lobby/${ game.id }` }>Go to game</Link></Table.Cell>
+                            <Table.Cell>{ game.status === statusWaiting && (<Link to={ `/lobby/${ game.id }` }>Go to game</Link>)}</Table.Cell>
                         </Table.Row>
                     )) }
                 </Table.Body>

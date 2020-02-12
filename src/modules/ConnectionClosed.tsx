@@ -11,6 +11,7 @@ const ConnectionClosed: FC<Props> = (props: Props) => {
     const reconnect = () => {
         setLoading(true)
         props.reconnect()
+        setLoading(false)
     }
     return (
         <Modal open={ true }>

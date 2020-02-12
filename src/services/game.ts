@@ -1,4 +1,4 @@
-import { BackendConnection, GameHandle, GameState, GameStateListener, Player } from '../models/game';
+import { BackendConnection, GameState } from '../models/game';
 
 export const onGamesList = (onUpdate: (games: GameState[]) => void): ( (event: string, data: string) => void ) => {
     return (event: string, data: string) => {
@@ -37,65 +37,4 @@ export const createGame = async (conn: BackendConnection): Promise<GameState> =>
 
 export const enterGame = async (conn: BackendConnection, gameId: string): Promise<string> => {
     return conn.send<string>('enter_game', gameId)
-}
-
-export const getGameHandle = (conn: BackendConnection): GameHandle => {
-    let gameState: GameState
-    const listeners: GameStateListener[] = []
-    const listener = (event: string, data: string) => {
-        gameState = JSON.parse(data)
-        listeners.forEach(l => l(gameState, event))
-    }
-    const closeListener = (event: WebSocketCloseEvent) => {
-        listeners.forEach(l => l(gameState, 'disconnected'))
-    }
-    conn.addMessageListener(listener)
-    conn.addCloseListener(closeListener)
-    // Now we initialize the game state by requesting the current gamestate - send_state does not need any data
-    // since the connection is alray bound to a game
-    return {
-        addListener: (l: GameStateListener) => {
-            listeners.push(l)
-        },
-        addPlayer: (p1: Player) => {
-        },
-        getState: (): Promise<GameState> => {
-            const p = new Promise<GameState>(async (res, rej) => {
-                if (gameState) {
-                    res(gameState)
-                    return
-                }
-                try {
-                    res(await conn.send<GameState>('send_state'))
-                } catch (e) {
-                    rej(e)
-                }
-            })
-            return p
-        },
-        moveDown: () => {
-        },
-        moveLeft: () => {
-        },
-        moveRight: () => {
-        },
-        rotate: () => {
-        },
-        start: () => {
-        },
-        stop: () => {
-        },
-        config: (cols: number, rows: number, name: string) => {
-            if (gameState) {
-                conn.send('config_game', { cols, rows, name })
-            }
-        },
-        disconnect: () => {
-            conn.removeMessageListener(listener)
-            conn.removeCloseListener(closeListener)
-        },
-        quit: () => {
-            conn.send('quit_game')
-        }
-    }
 }
